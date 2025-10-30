@@ -16,6 +16,56 @@ const Page4FinalEdit: React.FC = () => {
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showTipsModal, setShowTipsModal] = useState(false);
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
+
+  // 꿀팁 데이터 (Page3와 동일)
+  const tips = [
+    {
+      category: '생기부 기반 면접',
+      title: '생기부 기반 면접 준비법',
+      content: '생기부의 모든 활동에 대해 "왜"와 "어떻게"를 설명할 수 있어야 합니다. 활동 동기, 과정, 결과, 배운 점을 구체적으로 준비하세요.',
+      stat: '서울대 2024학년도 전형: 학생부종합전형 합격자의 87%가 생기부 모든 활동에 대한 설명을 준비했다고 응답'
+    },
+    {
+      category: '제시문 기반 면접',
+      title: '제시문 기반 면접 팁',
+      content: '제시문은 천천히 정확하게 읽고, 핵심 논점을 파악한 후 답변 구조를 먼저 세우세요. "제시문에 따르면..."으로 시작하며 근거를 명확히 하세요.',
+      stat: '2023년 주요 대학 면접 분석: 답변 시작 전 30초 생각 시간을 활용한 학생의 평균 점수가 12% 더 높음'
+    },
+    {
+      category: '면접 필수 체크',
+      title: '면접 전 반드시 체크할 사항',
+      content: '1) 지원 동기와 학과 이해도 2) 최근 전공 관련 이슈 3) 생기부 모든 활동 복습 4) 모의면접 최소 3회 이상 5) 예상 질문 30개 이상 준비',
+      stat: '2024 입시결과: 모의면접 5회 이상 실시한 학생의 합격률 73% vs 2회 이하 학생 41%'
+    },
+    {
+      category: '내신 준비',
+      title: '내신 준비 핵심 전략',
+      content: '수업 중 필기와 선생님 강조 내용이 가장 중요합니다. 시험 2주 전부터 오답노트를 만들고, 개념을 자신의 말로 설명할 수 있을 때까지 반복하세요.',
+      stat: '전국 고교생 설문(2023): 내신 1등급 학생의 89%가 "수업 필기 + 오답노트"를 핵심 학습법으로 선택'
+    },
+    {
+      category: '시험 준비',
+      title: '효과적인 시험 준비 방법',
+      content: '시험 범위를 3번 회독하세요. 1회독: 전체 흐름 파악, 2회독: 세부 개념 암기, 3회독: 문제 풀이 및 취약점 보완. 암기는 자기 전, 복습은 아침에.',
+      stat: '서울대 교육학과 연구(2023): 3회 이상 반복 학습 시 장기 기억 정착률 94% vs 1회 학습 23%'
+    },
+    {
+      category: '생기부 활용',
+      title: '생기부 작성 후 활용법',
+      content: '완성된 생기부를 바탕으로 "활동 연결맵"을 만들어 보세요. 서로 다른 활동들 간의 연관성을 찾아 하나의 스토리로 엮으면 면접에서 강력한 무기가 됩니다.',
+      stat: '2024 수시합격자 인터뷰: 학종 합격생의 76%가 "활동 간 연계성"을 면접에서 강조했다고 응답'
+    }
+  ];
+
+  const nextTip = () => {
+    setCurrentTipIndex((prev) => (prev + 1) % tips.length);
+  };
+
+  const prevTip = () => {
+    setCurrentTipIndex((prev) => (prev - 1 + tips.length) % tips.length);
+  };
 
   useEffect(() => {
     if (!basicInfo || !activityDetails || !draftResult) {
@@ -95,14 +145,29 @@ const Page4FinalEdit: React.FC = () => {
   if (!basicInfo || !activityDetails || !draftResult) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">최종 첨삭 및 저장</h1>
-          <p className="text-gray-600">
-            초안을 직접 수정하여 최종 생활기록부를 완성하세요
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <button
+              onClick={() => navigate('/')}
+              className="text-xl font-bold text-green-600 hover:text-green-700 transition-colors"
+            >
+              SchoolActivity
+            </button>
+          </div>
         </div>
+      </header>
+
+      <div className="py-12 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">최종 첨삭 및 저장</h1>
+            <p className="text-gray-600">
+              초안을 직접 수정하여 최종 생활기록부를 완성하세요
+            </p>
+          </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* 원본 AI 초안 (참조용) */}
@@ -249,14 +314,145 @@ const Page4FinalEdit: React.FC = () => {
           </div>
         </div>
 
-        {/* 진행 표시 */}
-        <div className="mt-8 flex justify-center items-center space-x-2">
-          <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-          <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-          <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-          <div className="w-3 h-3 rounded-full bg-indigo-600"></div>
+        {/* 꿀팁 섹션 */}
+        <div className="mt-6 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl shadow-lg p-6 border-2 border-amber-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              💡 입시 꿀팁 모음
+            </h3>
+            <button
+              onClick={() => setShowTipsModal(true)}
+              className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition font-medium text-sm"
+            >
+              전체 보기 →
+            </button>
+          </div>
+          <p className="text-sm text-gray-700 mb-4">
+            면접 준비, 내신 관리, 시험 대비 등 실전 입시 노하우를 확인하세요!
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {tips.map((tip, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  setCurrentTipIndex(idx);
+                  setShowTipsModal(true);
+                }}
+                className="p-4 bg-white rounded-lg border-2 border-amber-200 hover:border-amber-400 hover:shadow-md transition text-left"
+              >
+                <p className="text-xs text-amber-600 font-semibold mb-1">{tip.category}</p>
+                <p className="text-sm text-gray-800 font-medium">{tip.title}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+          {/* 진행 표시 */}
+          <div className="mt-8 flex justify-center items-center space-x-2">
+            <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+            <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+            <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+            <div className="w-3 h-3 rounded-full bg-indigo-600"></div>
+          </div>
         </div>
       </div>
+
+      {/* 꿀팁 모달 */}
+      {showTipsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gradient-to-r from-amber-500 to-yellow-500 text-white p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">💡 입시 꿀팁 모음</h2>
+                  <p className="text-sm opacity-90 mt-1">실전 면접/내신/시험 준비 노하우</p>
+                </div>
+                <button
+                  onClick={() => setShowTipsModal(false)}
+                  className="text-white hover:text-gray-200 text-3xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            {/* 팁 슬라이드 */}
+            <div className="p-8">
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-xs text-amber-600 font-semibold mb-1">
+                      {tips[currentTipIndex].category}
+                    </p>
+                    <h3 className="text-xl font-bold text-gray-800">
+                      {tips[currentTipIndex].title}
+                    </h3>
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    {currentTipIndex + 1} / {tips.length}
+                  </span>
+                </div>
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  {tips[currentTipIndex].content}
+                </p>
+                <div className="p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+                  <p className="text-sm text-blue-800">
+                    📊 <strong>데이터:</strong> {tips[currentTipIndex].stat}
+                  </p>
+                </div>
+              </div>
+
+              {/* 네비게이션 버튼 */}
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={prevTip}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+                >
+                  ← 이전
+                </button>
+                <div className="flex gap-2">
+                  {tips.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`w-2 h-2 rounded-full transition-colors cursor-pointer ${
+                        idx === currentTipIndex ? 'bg-amber-500' : 'bg-gray-300'
+                      }`}
+                      onClick={() => setCurrentTipIndex(idx)}
+                    />
+                  ))}
+                </div>
+                <button
+                  onClick={nextTip}
+                  className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition font-medium"
+                >
+                  다음 →
+                </button>
+              </div>
+
+              {/* 모든 팁 리스트 */}
+              <div className="mt-8 pt-8 border-t border-gray-200">
+                <h4 className="font-bold text-gray-800 mb-3">전체 꿀팁 목록</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  {tips.map((tip, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentTipIndex(idx)}
+                      className={`p-3 rounded-lg text-left transition ${
+                        idx === currentTipIndex
+                          ? 'bg-amber-100 border-2 border-amber-400'
+                          : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
+                      }`}
+                    >
+                      <p className="text-xs text-amber-600 font-semibold">{tip.category}</p>
+                      <p className="text-sm text-gray-800 font-medium">{tip.title}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

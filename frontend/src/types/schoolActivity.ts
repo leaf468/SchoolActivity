@@ -20,7 +20,8 @@ export type SectionType =
   | 'autonomy'   // 자율활동
   | 'club'       // 동아리활동
   | 'service'    // 봉사활동
-  | 'career';    // 진로활동
+  | 'career'     // 진로활동
+  | 'behavior';  // 행동특성 및 종합의견 (레거시)
 
 /**
  * 섹션 한글명 매핑
@@ -30,7 +31,8 @@ export const SECTION_NAMES: Record<SectionType, string> = {
   autonomy: '자율활동',
   club: '동아리활동',
   service: '봉사활동',
-  career: '진로활동'
+  career: '진로활동',
+  behavior: '행동특성 및 종합의견'
 };
 
 // ========================================
@@ -238,4 +240,94 @@ export interface SchoolActivityState {
   verificationResult: VerificationResult | null;
   currentStep: 'basic' | 'input' | 'draft' | 'review' | 'final';
   allRecords: GeneratedRecord[];
+  // 레거시 지원 (기존 코드 호환용) - 명시적으로 레거시 타입 사용
+  basicInfo: BasicInfo | null;
+  activityDetails: ActivityDetails | null;
+  emphasisKeywords: string[];
+  draftResult: DraftResult | null;
+  finalText: string | null;
+}
+
+// ========================================
+// 레거시 타입 (기존 코드 호환용)
+// ========================================
+
+export interface BasicInfo {
+  grade: string;
+  semester: string;
+  sectionType: SectionType;
+  subject?: string;
+}
+
+// 단일 활동 항목 (사용자가 추가할 수 있는 각각의 활동)
+export interface SingleActivity {
+  id: string;  // 활동 고유 ID
+  period?: string;  // 활동 기간 (예: "2024년 3월~6월")
+  role?: string;  // 맡은 역할
+  content: string;  // 활동 내용 (구체적 활동)
+  learnings?: string;  // 깨달은 바 / 배운 점
+  keywords?: string[];  // 이 활동에서 강조하고 싶은 키워드
+}
+
+export interface SubjectActivity {
+  subject: string;
+  activities: SingleActivity[];  // 여러 활동 지원
+  overallEmphasis?: string;  // 전체적으로 강조하고 싶은 점
+  overallKeywords?: string[];  // 전체적으로 강조하고 싶은 키워드
+  maxCharacters: 500;  // 최종 글자수 제한
+}
+
+export interface AutonomyActivity {
+  activities: SingleActivity[];  // 여러 활동 지원
+  overallEmphasis?: string;  // 전체적으로 강조하고 싶은 점
+  overallKeywords?: string[];  // 전체적으로 강조하고 싶은 키워드
+  maxCharacters: 500;  // 최종 글자수 제한
+}
+
+export interface ClubActivity {
+  clubName: string;
+  activities: SingleActivity[];  // 여러 활동 지원
+  overallEmphasis?: string;  // 전체적으로 강조하고 싶은 점
+  overallKeywords?: string[];  // 전체적으로 강조하고 싶은 키워드
+  maxCharacters: 500;  // 최종 글자수 제한
+}
+
+export interface CareerActivity {
+  activities: SingleActivity[];  // 여러 활동 지원
+  overallEmphasis?: string;  // 전체적으로 강조하고 싶은 점
+  overallKeywords?: string[];  // 전체적으로 강조하고 싶은 키워드
+  maxCharacters: 700;  // 진로활동은 700자
+}
+
+export interface BehaviorActivity {
+  activities: SingleActivity[];  // 여러 활동 지원
+  overallEmphasis?: string;  // 전체적으로 강조하고 싶은 점
+  overallKeywords?: string[];  // 전체적으로 강조하고 싶은 키워드
+  maxCharacters: 500;  // 최종 글자수 제한
+}
+
+export type ActivityDetails =
+  | SubjectActivity
+  | AutonomyActivity
+  | ClubActivity
+  | CareerActivity
+  | BehaviorActivity;
+
+export interface DraftResult {
+  draftText: string;
+  qualityScore?: number;
+  recommendedKeywords?: string[];
+  fewShotSamples?: string[];
+}
+
+export interface FinalRecord {
+  userId: string;
+  sessionId: string;
+  basicInfo: BasicInfo;
+  activityDetails: ActivityDetails;
+  emphasisKeywords: string[];
+  aiDraft: string;
+  finalText: string;
+  diffSummary?: string;
+  createdAt: string;
 }

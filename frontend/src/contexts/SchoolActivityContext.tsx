@@ -13,6 +13,7 @@ type SchoolActivityAction =
   | { type: 'ADD_KEYWORD'; payload: string }
   | { type: 'REMOVE_KEYWORD'; payload: string }
   | { type: 'SET_DRAFT_RESULT'; payload: DraftResult }
+  | { type: 'CLEAR_DRAFT' }
   | { type: 'SET_FINAL_TEXT'; payload: string }
   | { type: 'SET_CURRENT_STEP'; payload: SchoolActivityState['currentStep'] }
   | { type: 'RESET' };
@@ -22,12 +23,18 @@ const STORAGE_KEY = 'school_activity_state';
 const initialState: SchoolActivityState = {
   userId: `user_${Date.now()}`,
   sessionId: `session_${Date.now()}`,
+  studentInfo: null,
+  currentActivity: null,
+  generatedDraft: null,
+  verificationResult: null,
+  currentStep: 'basic',
+  allRecords: [],
+  // Legacy support
   basicInfo: null,
   activityDetails: null,
   emphasisKeywords: [],
   draftResult: null,
   finalText: null,
-  currentStep: 'basic',
 };
 
 const loadFromStorage = (): SchoolActivityState | null => {
@@ -50,7 +57,13 @@ const loadFromStorage = (): SchoolActivityState | null => {
 
 const saveToStorage = (state: SchoolActivityState) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    // 입력 데이터만 저장하고, 생성된 결과물(draftResult, finalText)은 제외
+    const stateToSave = {
+      ...state,
+      draftResult: null, // 항상 null로 저장
+      finalText: null,   // 항상 null로 저장
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
   } catch (error) {
     console.warn('Failed to save state to localStorage:', error);
   }
@@ -89,6 +102,8 @@ function schoolActivityReducer(
       };
     case 'SET_DRAFT_RESULT':
       return { ...state, draftResult: action.payload };
+    case 'CLEAR_DRAFT':
+      return { ...state, draftResult: null };
     case 'SET_FINAL_TEXT':
       return { ...state, finalText: action.payload };
     case 'SET_CURRENT_STEP':
@@ -98,6 +113,16 @@ function schoolActivityReducer(
         ...initialState,
         userId: `user_${Date.now()}`,
         sessionId: `session_${Date.now()}`,
+        studentInfo: null,
+        currentActivity: null,
+        generatedDraft: null,
+        verificationResult: null,
+        allRecords: [],
+        basicInfo: null,
+        activityDetails: null,
+        emphasisKeywords: [],
+        draftResult: null,
+        finalText: null,
       };
     default:
       return state;
@@ -115,6 +140,7 @@ interface SchoolActivityContextValue {
   addKeyword: (keyword: string) => void;
   removeKeyword: (keyword: string) => void;
   setDraftResult: (result: DraftResult) => void;
+  clearDraft: () => void;
   setFinalText: (text: string) => void;
   setCurrentStep: (step: SchoolActivityState['currentStep']) => void;
   reset: () => void;
@@ -159,6 +185,10 @@ export function SchoolActivityProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_DRAFT_RESULT', payload: result });
   }, []);
 
+  const clearDraft = useCallback(() => {
+    dispatch({ type: 'CLEAR_DRAFT' });
+  }, []);
+
   const setFinalText = useCallback((text: string) => {
     dispatch({ type: 'SET_FINAL_TEXT', payload: text });
   }, []);
@@ -181,6 +211,7 @@ export function SchoolActivityProvider({ children }: { children: ReactNode }) {
     addKeyword,
     removeKeyword,
     setDraftResult,
+    clearDraft,
     setFinalText,
     setCurrentStep,
     reset,

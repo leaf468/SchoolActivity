@@ -11,6 +11,39 @@ const Page1BasicInfo: React.FC = () => {
   const [semester, setSemester] = useState<string>('1');
   const [sectionType, setSectionType] = useState<SectionType>('subject');
   const [subject, setSubject] = useState<string>('');
+  const [customSubject, setCustomSubject] = useState<string>('');
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState<'detail' | 'inquiry' | 'foreign'>('detail');
+
+  // 기본 과목 (국영수만)
+  const basicSubjects = ['국어', '영어', '수학'];
+
+  // 세부 과목 (영역별)
+  const detailSubjects = {
+    국어: ['화법과 작문', '독서', '문학', '언어와 매체'],
+    영어: ['영어 회화', '영어 독해와 작문', '실용 영어'],
+    수학: ['수학Ⅰ', '수학Ⅱ', '미적분', '확률과 통계', '기하'],
+  };
+
+  // 탐구 과목
+  const inquirySubjects = {
+    사회: ['통합사회', '한국사', '세계사', '동아시아사', '경제', '정치와 법', '사회·문화', '생활과 윤리', '윤리와 사상', '한국지리', '세계지리'],
+    과학: ['통합과학', '과학탐구실험', '물리학Ⅰ', '물리학Ⅱ', '화학Ⅰ', '화학Ⅱ', '생명과학Ⅰ', '생명과학Ⅱ', '지구과학Ⅰ', '지구과학Ⅱ'],
+  };
+
+  // 제2외국어
+  const foreignLanguages = ['중국어Ⅰ', '중국어Ⅱ', '일본어Ⅰ', '일본어Ⅱ', '프랑스어Ⅰ', '프랑스어Ⅱ', '독일어Ⅰ', '독일어Ⅱ', '스페인어Ⅰ', '스페인어Ⅱ', '러시아어Ⅰ', '러시아어Ⅱ', '아랍어Ⅰ', '아랍어Ⅱ', '베트남어Ⅰ', '베트남어Ⅱ'];
+
+  const openModal = (type: 'detail' | 'inquiry' | 'foreign') => {
+    setModalType(type);
+    setShowModal(true);
+  };
+
+  const selectSubjectFromModal = (subj: string) => {
+    setSubject(subj);
+    setCustomSubject('');
+    setShowModal(false);
+  };
 
   const sectionOptions: { value: SectionType; label: string; description: string }[] = [
     {
@@ -41,28 +74,52 @@ const Page1BasicInfo: React.FC = () => {
   ];
 
   const handleNext = () => {
-    if (sectionType === 'subject' && !subject.trim()) {
-      alert('과목명을 입력해주세요.');
-      return;
+    if (sectionType === 'subject') {
+      const finalSubject = subject === 'custom' ? customSubject : subject;
+      if (!finalSubject.trim()) {
+        alert('과목명을 입력해주세요.');
+        return;
+      }
+      setBasicInfo({
+        grade,
+        semester,
+        sectionType,
+        subject: finalSubject,
+      });
+    } else {
+      setBasicInfo({
+        grade,
+        semester,
+        sectionType,
+        subject: undefined,
+      });
     }
-
-    setBasicInfo({
-      grade,
-      semester,
-      sectionType,
-      subject: sectionType === 'subject' ? subject : undefined,
-    });
     setCurrentStep('input');
     navigate('/page2');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-12 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-gray-800 mb-3">생활기록부 AI 작성</h1>
-          <p className="text-gray-600">학년, 학기 및 작성할 항목을 선택하세요</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <button
+              onClick={() => navigate('/')}
+              className="text-xl font-bold text-green-600 hover:text-green-700 transition-colors"
+            >
+              SchoolActivity
+            </button>
+          </div>
         </div>
+      </header>
+
+      <div className="py-12 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-bold text-gray-800 mb-3">생활기록부 AI 작성</h1>
+            <p className="text-gray-600">학년, 학기 및 작성할 항목을 선택하세요</p>
+          </div>
 
         <div className="bg-white rounded-2xl shadow-lg p-8">
           {/* 학년/학기 선택 */}
@@ -134,17 +191,95 @@ const Page1BasicInfo: React.FC = () => {
           {/* 세특 선택 시 과목명 입력 */}
           {sectionType === 'subject' && (
             <div className="mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
                 과목명 <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="예: 수학, 영어, 물리학 등"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-              />
-              <p className="text-xs text-gray-600 mt-2">
+
+              {/* 기본 과목 (국영수) */}
+              <div className="mb-4">
+                <p className="text-xs text-gray-600 mb-2">📚 기본 과목:</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {basicSubjects.map((subj, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setSubject(subj);
+                        setCustomSubject('');
+                      }}
+                      className={`px-4 py-3 text-sm font-semibold rounded-lg border-2 transition-colors ${
+                        subject === subj
+                          ? 'bg-blue-500 text-white border-blue-600'
+                          : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                      }`}
+                    >
+                      {subj}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 세부 과목 선택 버튼들 */}
+              <div className="mb-4 space-y-2">
+                <p className="text-xs text-gray-600 mb-2">🔍 세부 과목 선택:</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openModal('detail')}
+                    className="px-3 py-2 text-sm bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    국/영/수 세부과목 →
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal('inquiry')}
+                    className="px-3 py-2 text-sm bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    탐구 과목 →
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal('foreign')}
+                    className="px-3 py-2 text-sm bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    제2외국어 →
+                  </button>
+                </div>
+              </div>
+
+              {/* 직접 입력 옵션 */}
+              <div>
+                <label className="flex items-center mb-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="subjectInput"
+                    checked={subject === 'custom'}
+                    onChange={() => setSubject('custom')}
+                    className="mr-2"
+                  />
+                  <span className="text-sm font-medium text-gray-700">직접 입력</span>
+                </label>
+                {subject === 'custom' && (
+                  <input
+                    type="text"
+                    value={customSubject}
+                    onChange={(e) => setCustomSubject(e.target.value)}
+                    placeholder="과목명을 직접 입력하세요"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    autoFocus
+                  />
+                )}
+              </div>
+
+              {subject && subject !== 'custom' && (
+                <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-700">
+                    ✓ 선택된 과목: <span className="font-bold">{subject}</span>
+                  </p>
+                </div>
+              )}
+
+              <p className="text-xs text-gray-600 mt-3">
                 세특은 특정 과목에 대한 활동이므로 과목명이 필요합니다.
               </p>
             </div>
@@ -161,14 +296,99 @@ const Page1BasicInfo: React.FC = () => {
           </div>
         </div>
 
-        {/* 진행 표시 */}
-        <div className="mt-8 flex justify-center items-center space-x-2">
-          <div className="w-3 h-3 rounded-full bg-blue-600"></div>
-          <div className="w-3 h-3 rounded-full bg-gray-300"></div>
-          <div className="w-3 h-3 rounded-full bg-gray-300"></div>
-          <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+          {/* 진행 표시 */}
+          <div className="mt-8 flex justify-center items-center space-x-2">
+            <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+            <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+            <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+            <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+          </div>
         </div>
       </div>
+
+      {/* 과목 선택 모달 */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  {modalType === 'detail' && '국/영/수 세부 과목'}
+                  {modalType === 'inquiry' && '탐구 과목'}
+                  {modalType === 'foreign' && '제2외국어'}
+                </h2>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-3xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {modalType === 'detail' && (
+                <div className="space-y-6">
+                  {Object.entries(detailSubjects).map(([category, subjects]) => (
+                    <div key={category}>
+                      <h3 className="text-lg font-bold text-gray-700 mb-3">{category} 영역</h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        {subjects.map((subj, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => selectSubjectFromModal(subj)}
+                            className="px-4 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left font-medium"
+                          >
+                            {subj}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {modalType === 'inquiry' && (
+                <div className="space-y-6">
+                  {Object.entries(inquirySubjects).map(([category, subjects]) => (
+                    <div key={category}>
+                      <h3 className="text-lg font-bold text-gray-700 mb-3">{category} 탐구</h3>
+                      <div className="grid grid-cols-3 gap-3">
+                        {subjects.map((subj, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => selectSubjectFromModal(subj)}
+                            className="px-4 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-center font-medium"
+                          >
+                            {subj}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {modalType === 'foreign' && (
+                <div>
+                  <h3 className="text-lg font-bold text-gray-700 mb-3">제2외국어</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    {foreignLanguages.map((subj, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => selectSubjectFromModal(subj)}
+                        className="px-4 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-center font-medium"
+                      >
+                        {subj}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

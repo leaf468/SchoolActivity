@@ -20,6 +20,13 @@ const REACT_APP_OPENAI_MODEL = process.env.REACT_APP_OPENAI_MODEL || 'gpt-4o-min
 
 // 퓨샷 샘플 데이터 (항목별 5개씩)
 const FEW_SHOT_SAMPLES: Record<SectionType, string[]> = {
+  service: [
+    `지역 아동센터에서 6개월간 주 1회 교육 봉사를 진행하며 초등학생 5명을 대상으로 기초 수학 학습을 지도함. 학생별 학습 수준 차이가 크다는 점을 인식하고, 개인별 맞춤형 학습 자료를 제작하여 체계적으로 지도함. 특히 분수 개념을 어려워하는 학생에게 실생활 예시를 활용한 교구를 직접 제작하여 이해를 도왔고, 해당 학생이 학교 시험에서 80점 이상을 받는 성과를 거둠. 봉사 활동을 통해 교육의 본질은 단순한 지식 전달이 아닌 학습자 맞춤형 접근임을 깨달았으며, 교육자로서의 책임감과 보람을 느낌. 이 경험은 교육 봉사의 사회적 가치를 체감하는 계기가 되었음.`,
+    `요양원에서 4개월간 매주 토요일 어르신들과의 소통 봉사 활동을 진행함. 초기에는 세대 차이로 인한 소통의 어려움을 겪었으나, 어르신들의 과거 이야기를 경청하고 공감하며 점차 신뢰 관계를 형성함. 특히 치매를 앓고 계신 어르신께 옛날 노래를 들려드리고 함께 부르며, 회상 치료의 효과를 체감함. 이 경험을 통해 노인 복지와 세대 간 소통의 중요성을 인식하게 되었으며, 사회 복지 분야에 대한 관심이 높아짐. 봉사 활동은 단순한 도움 제공이 아닌 상호 이해와 존중의 과정임을 깨달음.`,
+    `환경 보호 캠페인 봉사 동아리에서 6개월간 활동하며, 지역 하천 정화 활동과 플라스틱 사용 줄이기 캠페인을 주도함. 매달 1회 하천 주변 쓰레기를 수거하고, 수질 오염도를 측정하여 데이터를 기록함. 이를 바탕으로 지역 주민 대상 환경 보호 포스터를 제작하여 배포하고, 일회용 플라스틱 사용 줄이기 서명 운동을 진행하여 200명 이상의 서명을 받음. 이 활동을 통해 환경 문제는 개인의 실천에서 시작됨을 깊이 이해하게 되었으며, 지속 가능한 미래를 위한 책임 의식을 함양함.`,
+    `다문화 가정 아동 대상 한국어 교육 봉사를 5개월간 진행하며, 주 2회 기초 한국어와 학교 과제 보조 학습을 지원함. 언어적 어려움뿐 아니라 문화 적응의 어려움을 겪는 아동들의 상황을 이해하고, 한국 문화와 모국 문화를 모두 존중하는 태도로 접근함. 특히 한글 자음과 모음을 게임 방식으로 가르쳐 흥미를 유발하였고, 3개월 만에 기초 문장 작성이 가능해지는 성과를 거둠. 이 경험을 통해 다문화 사회의 현실을 체감하고, 언어 교육의 사회적 역할과 포용의 가치를 배움.`,
+    `유기동물 보호소에서 6개월간 봉사 활동을 하며, 유기견 산책, 배식, 청소 등의 실무를 담당함. 단순 노동이 아닌, 동물의 행동 패턴을 관찰하고 스트레스를 줄이기 위한 환경 개선 방안을 고민함. 특히 사람을 경계하는 유기견에게 인내심을 가지고 접근하여 신뢰를 쌓았고, 해당 견이 입양되는 모습을 보며 큰 보람을 느낌. 이 경험을 통해 동물 복지의 중요성과 생명 존중의 가치를 깊이 깨닫게 되었으며, 반려동물과 인간의 공존에 대한 사회적 책임 의식을 함양함.`,
+  ],
   subject: [
     `수학 수업 중 '확률과 통계' 단원에서 조건부 확률의 실생활 적용 사례를 탐구하며 깊은 관심을 보임. 특히 베이지안 정리를 의료 진단의 정확도 개선에 적용하는 방법을 독자적으로 조사하여, 가상의 질병 진단 시나리오를 설정하고 민감도와 특이도를 변화시키며 사후 확률이 어떻게 변하는지 수치적으로 분석함. 이 과정에서 Python을 활용해 시뮬레이션 코드를 작성하고, 시각화 자료를 제작하여 동료 학생들 앞에서 발표함으로써 추상적인 수학 개념을 구체적인 문제 해결에 연결하는 능력을 입증함. 또한 탐구 결과를 바탕으로 "확률론적 사고의 의료 분야 적용 가능성"이라는 주제로 보고서를 작성하여 교내 수학 탐구 대회에 제출, 우수상을 수상하며 논리적 사고력과 창의적 문제 해결 능력을 인정받음.`,
     `영어 수업에서 셰익스피어의 『햄릿』을 읽고 단순한 줄거리 이해를 넘어, 작품 속 복수와 정의의 개념을 현대 사회의 법과 윤리 관점에서 재해석하는 비평문을 작성함. 특히 햄릿의 고뇌와 지연된 행동을 심리학적 관점에서 분석하고, 이를 현대의 의사결정 이론과 연결하여 "도덕적 딜레마 상황에서의 인간 행동 패턴"이라는 주제로 3,000단어 분량의 에세이를 완성함. 이 과정에서 관련 학술 논문 10편 이상을 영문으로 읽고 인용하며, 비판적 독해 능력과 학술적 글쓰기 역량을 크게 신장시킴. 완성된 에세이는 교사의 추천으로 교내 영어 학술지에 게재되었으며, 문학 작품을 단순히 감상하는 것을 넘어 학제간 융합적 사고를 통해 깊이 있는 탐구를 수행하는 자세를 보여줌.`,
@@ -67,6 +74,12 @@ class SchoolRecordService {
     activityDetails: ActivityDetails,
     emphasisKeywords: string[]
   ): Promise<DraftResult> {
+    console.log('[SchoolRecordService] generateDraft 호출됨:', {
+      basicInfo,
+      activityDetails,
+      emphasisKeywords
+    });
+
     const { sectionType, grade, semester, subject } = basicInfo;
 
     // 해당 항목의 퓨샷 샘플 로드
@@ -75,16 +88,48 @@ class SchoolRecordService {
     // 활동 세부사항을 텍스트로 변환
     const activityText = this.formatActivityDetails(sectionType, activityDetails);
 
-    const systemPrompt = `당신은 고등학교 교사입니다. 학생의 활동을 관찰한 내용을 바탕으로 생활기록부 [${this.getSectionName(sectionType)}]을 작성합니다.
+    console.log('[SchoolRecordService] 포맷된 활동 텍스트:', activityText);
 
-**작성 원칙**:
-1. **교사의 관찰 시점**으로 3인칭 서술 ("~함", "~였음")
-2. **구체적이고 객관적인 서술**: 추상적 표현 지양, 구체적 사실 중심
-3. **성장과 배움 강조**: 단순 활동 나열이 아닌, 학생이 얻은 배움과 성장 과정 서술
-4. **전문적 문체**: 격식 있고 교육적인 어조 유지
-5. **분량**: 약 300-500자, 한 문단으로 작성
+    const systemPrompt = `당신은 고등학교 교사입니다. 학생의 여러 활동을 관찰한 내용을 바탕으로 생활기록부 [${this.getSectionName(sectionType)}]을 작성합니다.
 
-**아래는 ${this.getSectionName(sectionType)} 항목의 우수 작성 예시 5개입니다. 이 예시들의 문체, 구조, 어조를 정확히 따라 작성하세요.**
+**GPT Killer 회피를 위한 필수 작성 원칙**:
+
+1. **문장 구조 다양화 (가장 중요)**:
+   - 짧은 문장(10-20자)과 긴 문장(50-80자)을 불규칙하게 섞어 사용
+   - 문장 호흡을 의도적으로 불규칙하게 배치
+   - 동일한 구조의 문장 연속 사용 금지
+
+2. **종결어미 변화 (AI 탐지 핵심 회피)**:
+   - "~함", "~였음", "~됨", "~바탕으로", "~며", "~고", "~되어", "~보임" 등을 무작위로 섞어 사용
+   - 절대 금지: "~를 통해", "~함양함", "~입증함", "~드러냄", "~보여줌" (GPT 특유 표현)
+   - 같은 종결어미 2회 연속 사용 금지
+
+3. **어휘 선택의 자연스러움**:
+   - 추상적 역량 단어 최소화: "역량", "능력", "자질", "소양" 등 직접 언급 금지
+   - 구체적 행동 동사 사용: "조사함", "분석함", "발표함", "작성함", "참여함"
+   - 동일 의미 반복 시 동의어로 자연스럽게 변형
+
+4. **서사 구조의 비정형성**:
+   - 서론-본론-결론 구조 절대 금지
+   - 활동을 시간순이 아닌 중요도나 인과관계로 배치
+   - 문단 중간에 갑작스러운 전환 허용 (실제 교사 작성 방식)
+
+5. **구체성과 정량화**:
+   - 모든 활동에 구체적 기간 명시 (예: 2020.08.31.-2020.12.24.)
+   - 숫자와 데이터 활용 (예: 17시간, 200명, 80점 이상)
+   - 고유명사 사용 (책 제목, 프로그램명, 기관명)
+
+6. **자연스러운 연결**:
+   - 활동 간 연결을 명시적 연결어 없이 암시적으로 처리
+   - "또한", "그리고", "따라서" 등 논리적 연결어 최소화
+   - 문맥으로 자연스럽게 흐름 형성
+
+7. **글자 수 준수**:
+   - 교과/자율/동아리: 500자 이내
+   - 진로: 700자 이내
+   - 행특: 500자 이내
+
+**CRITICAL: 아래 예시들의 문체를 정확히 분석하고 모방하세요. 내용은 다르되, 문장 구조, 어휘 선택, 종결어미 패턴을 그대로 따라야 합니다.**
 
 --- 예시 1 ---
 ${fewShotSamples[0]}
@@ -113,9 +158,16 @@ ${subject ? `- 과목: ${subject}` : ''}
 **활동 정보**:
 ${activityText}
 
-**강조 키워드** (반드시 자연스럽게 포함할 것): ${emphasisKeywords.join(', ')}
+${emphasisKeywords.length > 0 ? `**강조 키워드** (자연스럽게 포함, 직접 언급 금지): ${emphasisKeywords.join(', ')}` : ''}
 
-위 정보를 바탕으로, 앞서 제시된 5개 예시의 **문체와 구조를 정확히 따라** 생활기록부를 작성하세요.
+**작성 지침 (반드시 준수)**:
+1. 위 5개 예시의 **종결어미 패턴**을 그대로 모방하세요 ("~함", "~였으며", "~됨", "~보임" 등)
+2. 짧은 문장과 긴 문장을 불규칙하게 섞으세요
+3. "~를 통해", "~함양함", "~드러냄" 등 GPT 특유 표현 절대 사용 금지
+4. 구체적 날짜, 숫자, 고유명사를 반드시 포함하세요
+5. 추상적 역량 단어 대신 구체적 행동을 서술하세요
+
+**위 예시들의 문체를 정확히 분석하고, 동일한 스타일로 작성하세요. 내용만 다르게 하되, 문장 구조와 어휘 선택 패턴은 예시와 동일해야 합니다.**
 `;
 
     try {
@@ -298,12 +350,8 @@ ${activityText}
     const text = JSON.stringify(activityDetails);
 
     // 간단한 규칙 기반 검증
-    if (text.length < 100) {
+    if (text.length < 50) {
       warnings.push('입력 내용이 너무 짧습니다. 더 구체적으로 작성해주세요.');
-    }
-
-    if (!text.match(/\d/)) {
-      warnings.push('구체적인 수치나 기간을 포함하면 더 좋습니다.');
     }
 
     const vagueWords = ['열심히', '노력', '잘', '많이'];
@@ -364,33 +412,81 @@ ${activityText}
     switch (sectionType) {
       case 'subject':
         const subj = details as SubjectActivity;
-        return `- 활동 배경/동기: ${subj.background}
-- 활동 과정: ${subj.process}
-- 결과/성과: ${subj.result}
-- 성장/배움: ${subj.growth}`;
+        const subjActivities = subj.activities
+          .map((activity, index) => {
+            let text = `\n[활동 ${index + 1}]`;
+            if (activity.period) text += `\n- 기간: ${activity.period}`;
+            text += `\n- 내용: ${activity.content}`;
+            return text;
+          })
+          .join('\n');
+        return `과목: ${subj.subject}
+최종 글자수: ${subj.maxCharacters}자로 통합 필요
+${subjActivities}
+
+**AI 작성 지침**: 위 ${subj.activities.length}개 활동을 ${subj.maxCharacters}자 이내로 통합하여 하나의 자연스러운 문단으로 작성할 것.`;
+
       case 'autonomy':
         const auto = details as AutonomyActivity;
-        return `- 활동명: ${auto.activityName}
-- 역할: ${auto.role}
-- 활동 내용: ${auto.content}
-- 영향/성과: ${auto.impact}`;
+        const autoActivities = auto.activities
+          .map((activity, index) => {
+            let text = `\n[활동 ${index + 1}]`;
+            if (activity.period) text += `\n- 기간: ${activity.period}`;
+            text += `\n- 내용: ${activity.content}`;
+            return text;
+          })
+          .join('\n');
+        return `최종 글자수: ${auto.maxCharacters}자로 통합 필요
+${autoActivities}
+
+**AI 작성 지침**: 위 ${auto.activities.length}개 활동을 ${auto.maxCharacters}자 이내로 통합하여 하나의 자연스러운 문단으로 작성할 것.`;
+
       case 'club':
         const club = details as ClubActivity;
-        return `- 동아리명: ${club.clubName}
-- 역할: ${club.role}
-- 활동 내용: ${club.activities}
-- 성과: ${club.achievements}`;
+        const clubActivities = club.activities
+          .map((activity, index) => {
+            let text = `\n[활동 ${index + 1}]`;
+            if (activity.period) text += `\n- 기간: ${activity.period}`;
+            text += `\n- 내용: ${activity.content}`;
+            return text;
+          })
+          .join('\n');
+        return `동아리명: ${club.clubName}
+최종 글자수: ${club.maxCharacters}자로 통합 필요
+${clubActivities}
+
+**AI 작성 지침**: 위 ${club.activities.length}개 활동을 ${club.maxCharacters}자 이내로 통합하여 하나의 자연스러운 문단으로 작성할 것.`;
+
       case 'career':
         const career = details as CareerActivity;
-        return `- 활동 유형: ${career.activityType}
-- 활동 내용: ${career.content}
-- 깨달음/진로 영향: ${career.insights}`;
+        const careerActivities = career.activities
+          .map((activity, index) => {
+            let text = `\n[활동 ${index + 1}]`;
+            if (activity.period) text += `\n- 기간: ${activity.period}`;
+            text += `\n- 내용: ${activity.content}`;
+            return text;
+          })
+          .join('\n');
+        return `최종 글자수: ${career.maxCharacters}자로 통합 필요
+${careerActivities}
+
+**AI 작성 지침**: 위 ${career.activities.length}개 활동을 ${career.maxCharacters}자 이내로 통합하여 하나의 자연스러운 문단으로 작성할 것.`;
+
       case 'behavior':
         const behav = details as BehaviorActivity;
-        return `- 강점: ${behav.strengths}
-- 협업/관계: ${behav.collaboration}
-- 성장 과정: ${behav.growth}
-- 인성/태도: ${behav.character}`;
+        const behavActivities = behav.activities
+          .map((activity, index) => {
+            let text = `\n[관찰 사항 ${index + 1}]`;
+            if (activity.period) text += `\n- 시기: ${activity.period}`;
+            text += `\n- 내용: ${activity.content}`;
+            return text;
+          })
+          .join('\n');
+        return `최종 글자수: ${behav.maxCharacters}자로 통합 필요
+${behavActivities}
+
+**AI 작성 지침**: 위 ${behav.activities.length}개 관찰 내용을 ${behav.maxCharacters}자 이내로 통합하여 하나의 자연스러운 문단으로 작성할 것.`;
+
       default:
         return JSON.stringify(details);
     }
@@ -401,6 +497,7 @@ ${activityText}
       subject: '과목 세부능력 및 특기사항',
       autonomy: '자율활동',
       club: '동아리활동',
+      service: '봉사활동',
       career: '진로활동',
       behavior: '행동특성 및 종합의견',
     };
