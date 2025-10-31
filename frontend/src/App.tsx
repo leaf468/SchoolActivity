@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { trackPageView } from "./utils/analytics";
 
 // SchoolActivity Pages
+import Landing from './pages/Landing';
 import Page1BasicInfo from './pages/Page1BasicInfo';
 import Page2ActivityInput from './pages/Page2ActivityInput';
 import Page3DraftReview from './pages/Page3DraftReview';
@@ -27,7 +28,7 @@ function PageViewTracker() {
 // 페이지 경로에 따른 제목 반환
 function getPageTitle(pathname: string): string {
   const titleMap: Record<string, string> = {
-    '/': '기본 정보 입력',
+    '/': '랜딩 페이지',
     '/page1': '기본 정보 입력',
     '/page2': '활동 내용 입력',
     '/page3': '초안 생성 및 검토',
@@ -62,7 +63,7 @@ function AppContent() {
     <>
       {showAuthPopup && <InitialAuthPopup onClose={() => setShowAuthPopup(false)} />}
       <Routes>
-        <Route path="/" element={<Page1BasicInfo />} />
+        <Route path="/" element={<Landing />} />
         <Route path="/page1" element={<Page1BasicInfo />} />
         <Route path="/page2" element={<Page2ActivityInput />} />
         <Route path="/page3" element={<Page3DraftReview />} />
