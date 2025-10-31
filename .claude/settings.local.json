@@ -1,21 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git remote add:*)",
-      "Bash(git remote remove:*)",
-      "Bash(npm install)",
-      "Bash(npm start)",
-      "Bash(git add:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nPivot to SchoolActivity: AI-powered student record writing service\n\n- Remove backend directory (frontend-only service)\n- Implement 4-page flow for school record generation\n- Add SchoolActivity context and types for 5 record sections\n- Create schoolRecordService with GPT-4 few-shot prompting\n- Add 25 sample records (5 per section) for quality generation\n- Implement draft generation, quality check, and compliance validation\n- Build complete user flow: basic info → activity input → draft review → final edit\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git push:*)",
-      "Bash(git fetch:*)",
-      "Bash(git config:*)",
-      "Bash(pkill:*)",
-      "Bash(cat:*)",
-      "Bash(lsof:*)",
-      "Bash(xargs kill:*)",
-      "Bash(npm run build:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(npm install:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

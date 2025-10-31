@@ -7,3 +7,5 @@ build/
 frontend/node_modules/
 frontend/.cache/
 frontend/build/
+
+.env.example

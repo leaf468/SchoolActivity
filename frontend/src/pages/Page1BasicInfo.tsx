@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSchoolActivity } from '../contexts/SchoolActivityContext';
 import { SectionType } from '../types/schoolActivity';
+import CommonHeader from '../components/CommonHeader';
+import CommonFooter from '../components/CommonFooter';
 
 const Page1BasicInfo: React.FC = () => {
   const navigate = useNavigate();
@@ -100,19 +102,7 @@ const Page1BasicInfo: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <button
-              onClick={() => navigate('/')}
-              className="text-xl font-bold text-green-600 hover:text-green-700 transition-colors"
-            >
-              SchoolActivity
-            </button>
-          </div>
-        </div>
-      </header>
+      <CommonHeader />
 
       <div className="py-12 px-4">
         <div className="max-w-3xl mx-auto">
@@ -389,6 +379,7 @@ const Page1BasicInfo: React.FC = () => {
           </div>
         </div>
       )}
+      <CommonFooter />
     </div>
   );
 };

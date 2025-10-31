@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSchoolActivity } from '../contexts/SchoolActivityContext';
+import { useAuth } from '../contexts/AuthContext';
 import { schoolRecordService } from '../services/schoolRecordService';
 import { FinalRecord } from '../types/schoolActivity';
+import { supabase } from '../config/supabase';
 
 const Page4FinalEdit: React.FC = () => {
   const navigate = useNavigate();
   const { state, setFinalText, reset } = useSchoolActivity();
+  const { user, isAuthenticated, isGuest } = useAuth();
   const { basicInfo, activityDetails, emphasisKeywords, draftResult } = state;
 
   const [editedText, setEditedText] = useState('');
@@ -99,7 +102,7 @@ const Page4FinalEdit: React.FC = () => {
     setIsSaving(true);
 
     try {
-      // 최종 레코드 저장 (실제로는 백엔드 API 호출)
+      // 최종 레코드 저장
       const finalRecord: FinalRecord = {
         userId: state.userId,
         sessionId: state.sessionId,
@@ -111,16 +114,41 @@ const Page4FinalEdit: React.FC = () => {
         createdAt: new Date().toISOString(),
       };
 
-      // localStorage에 임시 저장 (실제 서비스에서는 DB 저장)
-      const savedRecords = JSON.parse(localStorage.getItem('saved_records') || '[]');
-      savedRecords.push(finalRecord);
-      localStorage.setItem('saved_records', JSON.stringify(savedRecords));
+      // 로그인한 사용자는 Supabase에 저장
+      if (isAuthenticated && user && !isGuest) {
+        const title = `${basicInfo.grade}학년 ${basicInfo.semester}학기 - ${
+          basicInfo.sectionType === 'subject' ? basicInfo.subject :
+          basicInfo.sectionType === 'autonomy' ? '자율활동' :
+          basicInfo.sectionType === 'club' ? '동아리활동' :
+          basicInfo.sectionType === 'career' ? '진로활동' : '행동특성 및 종합의견'
+        }`;
+
+        const { error } = await supabase
+          .from('school_activity_records')
+          .insert([{
+            user_id: user.id,
+            title: title,
+            content: editedText,
+            metadata: JSON.stringify(finalRecord)
+          }]);
+
+        if (error) throw error;
+      } else {
+        // 비회원은 localStorage에만 저장
+        const savedRecords = JSON.parse(localStorage.getItem('saved_records') || '[]');
+        savedRecords.push(finalRecord);
+        localStorage.setItem('saved_records', JSON.stringify(savedRecords));
+      }
 
       setFinalText(editedText);
       setSaveSuccess(true);
 
       setTimeout(() => {
-        alert('생활기록부가 저장되었습니다!');
+        if (isGuest) {
+          alert('생활기록부가 임시 저장되었습니다! (회원 가입 시 영구 보관 가능)');
+        } else {
+          alert('생활기록부가 저장되었습니다!');
+        }
       }, 500);
     } catch (error) {
       console.error('Save error:', error);
