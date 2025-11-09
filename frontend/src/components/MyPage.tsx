@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../config/supabase';
-import { SavedRecord } from '../types/auth';
+import {
+  getMyProfile,
+  updateMyProfile,
+  getMyTodos,
+  createTodo,
+  updateTodo,
+  deleteTodo,
+  getMyActivityRecords,
+  deleteActivityRecord,
+} from '../supabase';
+import type { ActivityRecord, Todo as TodoType, UserProfile } from '../supabase/types';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import LoginModal from './LoginModal';
@@ -10,6 +19,7 @@ import SignupModal from './SignupModal';
 import CommonFooter from './CommonFooter';
 import { getUniversitySlogan } from '../data/universitySlogans';
 
+// 로컬 Todo 인터페이스 (호환성 유지)
 interface Todo {
   id: string;
   text: string;
@@ -19,7 +29,7 @@ interface Todo {
 
 const MyPage: React.FC = () => {
   const { user, isAuthenticated, isGuest, signOut } = useAuth();
-  const [records, setRecords] = useState<SavedRecord[]>([]);
+  const [records, setRecords] = useState<ActivityRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   // School info
@@ -43,18 +53,24 @@ const MyPage: React.FC = () => {
   const [showSignupModal, setShowSignupModal] = useState(false);
 
   const fetchRecords = React.useCallback(async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('school_activity_records')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('updated_at', { ascending: false });
+      const result = await getMyActivityRecords();
 
-      if (error) throw error;
-      setRecords(data || []);
+      if (result.success && result.data) {
+        setRecords(result.data);
+      } else {
+        console.error('활동 기록 조회 실패:', result.error);
+        setRecords([]);
+      }
     } catch (err: any) {
-      console.error(err);
+      console.error('활동 기록 조회 중 오류:', err);
+      setRecords([]);
     } finally {
       setLoading(false);
     }
@@ -145,15 +161,15 @@ const MyPage: React.FC = () => {
     if (!window.confirm('삭제하시겠습니까?')) return;
 
     try {
-      const { error } = await supabase
-        .from('school_activity_records')
-        .delete()
-        .eq('id', recordId);
+      const result = await deleteActivityRecord(recordId);
 
-      if (error) throw error;
-      setRecords(records.filter((r) => r.id !== recordId));
+      if (result.success) {
+        setRecords(records.filter((r) => r.id !== recordId));
+      } else {
+        alert('삭제 실패: ' + (result.error || '알 수 없는 오류'));
+      }
     } catch (err: any) {
-      alert('삭제 실패');
+      alert('삭제 실패: ' + (err.message || '알 수 없는 오류'));
     }
   };
 
@@ -529,7 +545,9 @@ const MyPage: React.FC = () => {
                       삭제
                     </button>
                   </div>
-                  <p className="text-sm text-gray-700 line-clamp-3">{record.content}</p>
+                  <p className="text-sm text-gray-700 line-clamp-3">
+                    {record.final_text || record.generated_draft || record.activity_summary || '내용 없음'}
+                  </p>
                 </div>
               ))}
             </div>

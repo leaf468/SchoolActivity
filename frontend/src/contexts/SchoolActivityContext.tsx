@@ -5,6 +5,8 @@ import {
   ActivityDetails,
   DraftResult,
 } from '../types/schoolActivity';
+import { useAuth } from './AuthContext';
+import { upsertActivityRecordBySession } from '../supabase';
 
 type SchoolActivityAction =
   | { type: 'SET_BASIC_INFO'; payload: BasicInfo }
@@ -149,6 +151,7 @@ interface SchoolActivityContextValue {
 const SchoolActivityContext = createContext<SchoolActivityContextValue | undefined>(undefined);
 
 export function SchoolActivityProvider({ children }: { children: ReactNode }) {
+  const { user, isAuthenticated, isGuest } = useAuth();
   const savedState = loadFromStorage();
   const [state, dispatch] = useReducer(schoolActivityReducer, savedState || initialState);
 
@@ -160,6 +163,73 @@ export function SchoolActivityProvider({ children }: { children: ReactNode }) {
 
     return () => clearTimeout(timeoutId);
   }, [state]);
+
+  // Supabase 자동 저장 (로그인한 사용자만)
+  useEffect(() => {
+    // 로그인하지 않았거나 게스트면 스킵
+    if (!isAuthenticated || isGuest || !user) return;
+
+    // 저장할 데이터가 없으면 스킵
+    if (!state.basicInfo && !state.activityDetails) return;
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        // 제목 생성
+        const title = state.basicInfo
+          ? `${state.basicInfo.grade}학년 ${state.basicInfo.semester}학기 - ${
+              state.basicInfo.sectionType === 'subject' ? state.basicInfo.subject :
+              state.basicInfo.sectionType === 'autonomy' ? '자율활동' :
+              state.basicInfo.sectionType === 'club' ? '동아리활동' :
+              state.basicInfo.sectionType === 'career' ? '진로활동' : '행동특성 및 종합의견'
+            }`
+          : '임시 저장';
+
+        // ActivityDetails에서 활동 내용 추출
+        let activitySummary = null;
+        if (state.activityDetails) {
+          const details = state.activityDetails;
+          if ('activities' in details && details.activities.length > 0) {
+            // 모든 활동의 content를 결합
+            activitySummary = details.activities.map(a => a.content).join(' ');
+          }
+        }
+
+        // student_grade 안전하게 파싱 (1, 2, 3만 허용)
+        const parseGrade = (grade: string | undefined): number | null => {
+          if (!grade) return null;
+          const parsed = parseInt(grade, 10);
+          if (isNaN(parsed) || parsed < 1 || parsed > 3) {
+            return null;
+          }
+          return parsed;
+        };
+
+        // Supabase에 자동 저장
+        await upsertActivityRecordBySession(
+          state.sessionId,
+          {
+            title: title,
+            student_name: null, // BasicInfo에는 student_name이 없음
+            student_grade: parseGrade(state.basicInfo?.grade),
+            section_type: state.basicInfo?.sectionType || null,
+            activity_summary: activitySummary,
+            keywords: state.emphasisKeywords.length > 0 ? state.emphasisKeywords : null,
+            activity_details: {
+              basicInfo: state.basicInfo,
+              activityDetails: state.activityDetails,
+            },
+            // draftResult와 finalText는 Page3, Page4에서 별도로 저장됨
+          }
+        );
+      } catch (error) {
+        console.error('Supabase 자동 저장 실패:', error);
+        // 에러가 나도 localStorage는 유지되므로 조용히 실패
+        // 사용자에게 알림 표시하지 않음 (UX 개선)
+      }
+    }, 1000); // 1초 debounce (타이핑 중에는 저장 안 함)
+
+    return () => clearTimeout(timeoutId);
+  }, [state.basicInfo, state.activityDetails, state.emphasisKeywords, state.sessionId, isAuthenticated, isGuest, user]);
 
   const setBasicInfo = useCallback((info: BasicInfo) => {
     dispatch({ type: 'SET_BASIC_INFO', payload: info });

@@ -4,150 +4,173 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-### Frontend Development
+### Development
 ```bash
 cd frontend
 npm install          # Install dependencies
-npm start           # Start development server (localhost:3000)
+npm start           # Start development server (port 3000)
 npm run dev         # Alternative start command
 npm run build       # Build for production
 npm test            # Run tests
 ```
 
-### Backend Development
+### Environment Setup
 ```bash
-cd backend
-npm install          # Install dependencies
-npm run dev         # Start development server with hot reload (port 3001)
-npm run build       # Compile TypeScript to JavaScript
-npm start           # Run compiled production server
-```
-
-### Full Stack Development
-```bash
-# Root directory deployment commands (Vercel)
-# Frontend runs on port 3000, Backend on port 3001
+# Required environment variables in frontend/.env
+REACT_APP_OPENAI_API_KEY=your-api-key        # OpenAI API key (required)
+REACT_APP_OPENAI_MODEL=gpt-4o                # Model selection (gpt-4o or gpt-4o-mini)
+REACT_APP_SUPABASE_URL=your-url              # Supabase project URL
+REACT_APP_SUPABASE_ANON_KEY=your-key         # Supabase anon key
 ```
 
 ## Architecture
 
-This is an AI-powered portfolio generation system with a React TypeScript frontend and Express TypeScript backend.
+This is an AI-powered Korean school activity record (생기부) generation system built as a React TypeScript frontend application. It helps high school students write professional school activity records using OpenAI's GPT-4.
 
 ### Project Structure
 ```
-AutoPortfolio/
-├── frontend/          # React TypeScript frontend
+SchoolActivity/
+├── frontend/                        # React TypeScript frontend (CRA + Vite)
 │   ├── src/
-│   │   ├── components/     # React components
-│   │   ├── services/       # Business logic & API calls
-│   │   ├── types/          # TypeScript definitions
-│   │   ├── templates/      # Portfolio templates
-│   │   └── main.tsx        # App entry point
+│   │   ├── pages/                  # 4-page wizard flow
+│   │   │   ├── Page1BasicInfo.tsx      # Student info input
+│   │   │   ├── Page2ActivityInput.tsx  # Activity summary input
+│   │   │   ├── Page3DraftReview.tsx    # AI draft review
+│   │   │   └── Page4FinalEdit.tsx      # Final verification
+│   │   ├── components/             # React components
+│   │   │   ├── CommonHeader.tsx        # Global header
+│   │   │   ├── CommonFooter.tsx        # Global footer
+│   │   │   ├── InitialAuthPopup.tsx    # Auth flow
+│   │   │   ├── LoginModal.tsx          # Supabase login
+│   │   │   ├── SignupModal.tsx         # Supabase signup
+│   │   │   ├── MyPage.tsx              # User dashboard
+│   │   │   └── ui/                     # Reusable UI
+│   │   ├── services/               # Business logic
+│   │   │   ├── schoolRecordGenerator.ts # A-M-A-R generation
+│   │   │   ├── recordVerifier.ts       # 5-criterion verification
+│   │   │   ├── schoolRecordService.ts  # Main orchestrator
+│   │   │   └── pdfGenerator.ts         # PDF export
+│   │   ├── contexts/               # React Context
+│   │   │   ├── SchoolActivityContext.tsx # Main state
+│   │   │   └── AuthContext.tsx         # Supabase auth
+│   │   ├── types/                  # TypeScript interfaces
+│   │   │   └── schoolActivity.ts       # Core types
+│   │   ├── data/                   # Data files
+│   │   │   ├── fewShotExamples.ts      # Few-shot examples
+│   │   │   └── universitySlogans.ts    # University data
+│   │   ├── config/
+│   │   │   └── supabase.ts             # Supabase client
+│   │   └── App.tsx                 # Main app routing
 │   └── package.json
-├── backend/           # Express TypeScript backend
-│   ├── src/
-│   │   ├── api/            # API routes
-│   │   ├── services/       # Business logic
-│   │   ├── types/          # Shared type definitions
-│   │   └── index.ts        # Server entry point
-│   └── package.json
-└── vercel.json       # Deployment configuration
+├── vercel.json                     # Vercel deployment
+├── README.md                       # Project README (Korean)
+├── IMPLEMENTATION_SUMMARY.md       # Detailed implementation
+└── HOW_TO_ADD_FEWSHOTS.md        # Few-shot guide
 ```
 
 ### Core Workflow
-The application follows a wizard-based approach for portfolio creation:
 
-1. **Template Selection** - User chooses from predefined portfolio templates (james, geon, eunseong, iu)
-2. **AI Organization** - User inputs raw information that gets organized by OpenAI GPT-4
-3. **Auto-fill** - System auto-fills portfolio data based on organized content
-4. **Enhanced Editing** - Manual refinement of generated content with AI assistance
-5. **Feedback & Completion** - User feedback integration and final result generation
-6. **Export** - Generate markdown, HTML, and PDF formats
+The application implements a 4-page wizard flow for AI-powered 생기부 generation:
 
-### Frontend Architecture
+1. **Page1BasicInfo** - Student information input (name, grade, major track)
+2. **Page2ActivityInput** - Activity summary and keywords input
+3. **Page3DraftReview** - AI-generated draft with A-M-A-R structure highlighting
+4. **Page4FinalEdit** - Verification results and final export
 
-#### Key Components
-- `PortfolioWizard.tsx` - Main wizard orchestrating the entire flow
-- `AIOrganizer.tsx` - Handles AI-powered content organization
-- `AutoFillPortfolioEditor.tsx` - Auto-population of portfolio fields
-- `EnhancedPortfolioEditor.tsx` - Manual editing interface with AI suggestions
-- `FinalResultPanel.tsx` - Final output and download functionality
-- `BlockCard.tsx` - Reusable component for portfolio content blocks
+### AI Generation System
 
-#### Services Layer
-- `aiOrganizer.ts` - OpenAI integration for content organization
-- `autoFillService.ts` - Auto-fill functionality
-- `oneClickGenerator.ts` - Portfolio generation using Mustache templates
-- `userFeedbackService.ts` - User feedback collection and processing
-- `contentRecommendationService.ts` - AI-powered content suggestions
-- `portfolioTextEnhancer.ts` - Text enhancement and improvement
+#### A-M-A-R Methodology
+The system structures school records using the A-M-A-R framework:
+- **Action**: Core activity from user input
+- **Motivation**: Intellectual curiosity linked to career path
+- **Advanced Action**: Specific deeper exploration
+- **Realization**: Learning outcomes and career connections
 
-#### Data Models
-Core types in `src/types/portfolio.ts`:
-- `PortfolioData` - Main portfolio structure containing all sections
-- `UserInfo` - Personal information (name, title, contact details)
-- `Experience` - Work experience entries
-- `Project` - Project entries with technologies and highlights
-- `Education` - Educational background
-- `Skill` - Technical skills categorized by proficiency
-- `AssistantResponse` - AI assistant communication interface
+#### Two-Prompt Architecture
 
-### Backend Architecture
+**Prompt 1: Generation Expert** (`schoolRecordGenerator.ts`)
+- Implements A-M-A-R methodology
+- AI detection evasion through linguistic burstiness
+- Teacher observation tone enforcement
+- Career-aligned fusion thinking (same activity → different narratives per major track)
+- Few-shot learning with real examples
 
-The backend provides verification and block-based content management:
+**Prompt 2: Verification Consultant** (`recordVerifier.ts`)
+- 5-criterion evaluation system:
+  1. Authenticity (genuine student writing)
+  2. Consistency (matches original activity)
+  3. Plagiarism Risk Assessment
+  4. Credibility Check
+  5. Improvement Recommendations
 
-#### API Endpoints
-- `/health` - Health check endpoint
-- Block management endpoints for portfolio content validation
+### Data Models
 
-#### Services
-- `blockService.ts` - Handles content block operations and validation
-- Shared types with frontend for consistent data structures
+Core types in `src/types/schoolActivity.ts`:
+- `MajorTrack` - 5 major tracks (상경/공학/인문사회/자연과학/의생명)
+- `SectionType` - 5 record sections (교과세특/자율/동아리/봉사/진로)
+- `StudentInfo` - Student basic information
+- `ActivityInput` - User activity input with emphasis keywords
+- `GeneratedRecord` - AI-generated output with metadata
+- `VerificationResult` - 5-criterion evaluation scores
+
+### State Management
+
+**SchoolActivityContext** (`contexts/SchoolActivityContext.tsx`)
+- Reducer-based state management with localStorage persistence
+- Manages student info, activities, generated drafts, and verification results
+- Session management for tracking user flow
+
+**AuthContext** (`contexts/AuthContext.tsx`)
+- Supabase authentication integration
+- Supports login, signup, and guest mode
+- User profile and saved records management
 
 ### Tech Stack
 
-#### Frontend
 - **React 19.1.1** with TypeScript for UI
 - **Tailwind CSS** for utility-first styling
-- **Framer Motion** for smooth animations
-- **React Hook Form** for form state management
-- **React Query** for server state management
-- **OpenAI API** for AI-powered features
-- **Mustache** for template rendering
-- **HTML2Canvas + jsPDF** for PDF generation
-- **Axios** for API communication
+- **Framer Motion** for animations
+- **React Hook Form** for form management
+- **React Query** for server state
+- **OpenAI API** for AI generation
+- **Supabase** for authentication and data persistence
+- **React Markdown** for content rendering
+- **jsPDF & HTML2Canvas** for PDF export
 
-#### Backend
-- **Express 4.18** with TypeScript for API server
-- **CORS** for cross-origin resource sharing
-- **TypeScript 5.1** for type safety
+### Key Services
 
-### State Management
-- Frontend uses React hooks with prop drilling for component communication
-- The PortfolioWizard maintains overall step state
-- Form state managed by React Hook Form
-- Server state cached with React Query
+#### School Record Services
+- `schoolRecordService.ts` - Main orchestrator combining generation and verification
+- `schoolRecordGenerator.ts` - A-M-A-R based content generation
+- `recordVerifier.ts` - Quality and plagiarism verification
+- `pdfGenerator.ts` - Export to PDF functionality
 
-### Templates
-Portfolio templates are stored in `frontend/src/templates/`:
-- `portfolioTemplates.ts` - Basic template definitions
-- `improvedTemplates.ts` - Enhanced template versions
-- Templates support Mustache syntax for dynamic content injection
-
-### AI Integration
-- **OpenAI GPT-4** for intelligent content parsing and organization
-- **Smart questioning** to identify missing portfolio information
-- **Content enhancement** for professional writing improvement
-- **Template-based generation** with AI-optimized content
-
-### Environment Setup
-Frontend requires OpenAI API key:
-```bash
-# In frontend/.env
-REACT_APP_OPENAI_API_KEY=your-api-key-here
-```
+#### Data Management
+- `fewShotExamples.ts` - Real example database (42 examples needed across tracks/grades/sections)
+- `universitySlogans.ts` - University name auto-completion data
 
 ### Deployment
 - Configured for Vercel deployment via `vercel.json`
 - Frontend builds to `frontend/build`
-- Backend can be deployed separately or as serverless functions
+- Uses Create React App build system
+
+## Important Context
+
+### Korean Education System
+- 생기부 (School Activity Record) is crucial for Korean university admissions
+- Records are written from teacher's observational perspective
+- Must demonstrate career alignment and intellectual growth
+- Requires specific tone and structure to appear authentic
+
+### AI Detection Evasion
+The system includes sophisticated measures to avoid AI detection:
+- Enforced teacher observation tone ("~함.", "~임.", "~이 돋보임.")
+- Linguistic burstiness (20-30% short sentences, 70-80% long sentences)
+- Prohibition of template mimicry
+- Exclusion of clichéd expressions
+
+### Few-Shot Learning Framework
+- Currently has 2 sample examples, needs 42 total
+- Examples organized by track × grade × section type
+- Guide for adding examples in `HOW_TO_ADD_FEWSHOTS.md`
+- Helper functions: `getRelevantExamples()`, `getExamplesBySubject()`, `getRandomExamples()`

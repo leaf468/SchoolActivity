@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../config/supabase';
+import { supabase } from '../supabase/client';
+import * as authService from '../supabase/auth.service';
 import { AuthState } from '../types/auth';
-import type { User } from '../types/auth';
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<void>;
@@ -30,34 +30,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   useEffect(() => {
-    // Check for hardcoded admin session in localStorage
-    const adminSession = localStorage.getItem('admin_session');
-    if (adminSession) {
-      const adminUser = JSON.parse(adminSession);
-      setAuthState({
-        user: adminUser,
-        isAuthenticated: true,
-        isGuest: false,
-        loading: false,
-      });
-      return;
-    }
+    let subscription: any = null;
 
-    // Check for guest mode
-    const guestMode = localStorage.getItem('guest_mode');
-    if (guestMode === 'true') {
-      setAuthState({
-        user: null,
-        isAuthenticated: false,
-        isGuest: true,
-        loading: false,
-      });
-      return;
-    }
+    const initializeAuth = async () => {
+      // 1. Supabase 세션을 먼저 확인 (최우선)
+      const { data: { session } } = await supabase.auth.getSession();
 
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
+        // Supabase 세션이 있으면 localStorage를 clear하고 세션 사용
+        localStorage.removeItem('admin_session');
+        localStorage.removeItem('guest_mode');
+
         setAuthState({
           user: {
             id: session.user.id,
@@ -71,13 +54,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           loading: false,
         });
       } else {
+        // Supabase 세션이 없으면 localStorage 확인
+        const adminSession = localStorage.getItem('admin_session');
+        if (adminSession) {
+          const adminUser = JSON.parse(adminSession);
+          setAuthState({
+            user: adminUser,
+            isAuthenticated: true,
+            isGuest: false,
+            loading: false,
+          });
+          return; // admin은 Supabase listener 불필요
+        }
+
+        const guestMode = localStorage.getItem('guest_mode');
+        if (guestMode === 'true') {
+          setAuthState({
+            user: null,
+            isAuthenticated: false,
+            isGuest: true,
+            loading: false,
+          });
+          return; // guest도 listener 불필요
+        }
+
+        // 어떤 세션도 없으면 로딩 종료
         setAuthState(prev => ({ ...prev, loading: false }));
       }
-    });
+    };
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    initializeAuth();
+
+    // Listen for auth changes (항상 등록)
+    const { data: { subscription: sub } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
+        // 로그인 성공 시 localStorage clear
+        localStorage.removeItem('admin_session');
+        localStorage.removeItem('guest_mode');
+
         setAuthState({
           user: {
             id: session.user.id,
@@ -91,6 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           loading: false,
         });
       } else {
+        // 로그아웃 시
         setAuthState({
           user: null,
           isAuthenticated: false,
@@ -100,7 +115,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    return () => subscription.unsubscribe();
+    subscription = sub;
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -126,32 +147,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    // Otherwise, proceed with Supabase authentication
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    // Clear localStorage before Supabase login
+    localStorage.removeItem('admin_session');
+    localStorage.removeItem('guest_mode');
+
+    // Proceed with Supabase authentication using service layer
+    const result = await authService.signIn(email, password);
+    if (!result.success) {
+      throw new Error(result.error || '로그인에 실패했습니다.');
+    }
+    // onAuthStateChange listener가 자동으로 상태를 업데이트함
   };
 
   const signUp = async (email: string, password: string, name?: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name: name,
-        },
-      },
-    });
-    if (error) throw error;
+    const result = await authService.signUp(email, password, name);
+    if (!result.success) {
+      throw new Error(result.error || '회원가입에 실패했습니다.');
+    }
   };
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
-    if (error) throw error;
+    const result = await authService.signInWithGoogle(window.location.origin);
+    if (!result.success) {
+      throw new Error(result.error || '구글 로그인에 실패했습니다.');
+    }
   };
 
   const signOut = async () => {
@@ -159,8 +178,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('admin_session');
     localStorage.removeItem('guest_mode');
 
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    const result = await authService.signOut();
+    if (!result.success) {
+      throw new Error(result.error || '로그아웃에 실패했습니다.');
+    }
 
     setAuthState({
       user: null,

@@ -4,7 +4,7 @@ import { useSchoolActivity } from '../contexts/SchoolActivityContext';
 import { useAuth } from '../contexts/AuthContext';
 import { schoolRecordService } from '../services/schoolRecordService';
 import { FinalRecord } from '../types/schoolActivity';
-import { supabase } from '../config/supabase';
+import { upsertActivityRecordBySession } from '../supabase';
 
 const Page4FinalEdit: React.FC = () => {
   const navigate = useNavigate();
@@ -123,16 +123,70 @@ const Page4FinalEdit: React.FC = () => {
           basicInfo.sectionType === 'career' ? '진로활동' : '행동특성 및 종합의견'
         }`;
 
-        const { error } = await supabase
-          .from('school_activity_records')
-          .insert([{
-            user_id: user.id,
-            title: title,
-            content: editedText,
-            metadata: JSON.stringify(finalRecord)
-          }]);
+        // ActivityDetails에서 활동 내용 추출
+        let activitySummary = '';
+        if (activityDetails) {
+          if ('activities' in activityDetails && activityDetails.activities.length > 0) {
+            activitySummary = activityDetails.activities.map(a => a.content).join(' ');
+          }
+        }
 
-        if (error) throw error;
+        // student_grade 안전하게 파싱 (1, 2, 3만 허용)
+        const parseGrade = (grade: string): number | null => {
+          const parsed = parseInt(grade, 10);
+          if (isNaN(parsed) || parsed < 1 || parsed > 3) {
+            return null;
+          }
+          return parsed;
+        };
+
+        // draft_confidence 범위 제한 (0.0 ~ 1.0)
+        const normalizeDraftConfidence = (score: number | undefined | null): number | null => {
+          if (score === undefined || score === null) return null;
+
+          // 0-100 범위를 0-1로 변환
+          let normalized = score;
+          if (score > 1) {
+            normalized = score / 100;
+          }
+
+          // 0-1 범위로 제한
+          return Math.max(0, Math.min(1, normalized));
+        };
+
+        console.log('Saving with data:', {
+          grade: basicInfo.grade,
+          parsed_grade: parseGrade(basicInfo.grade),
+          qualityScore: draftResult.qualityScore,
+          normalized_confidence: normalizeDraftConfidence(draftResult.qualityScore),
+        });
+
+        // 새 서비스 레이어 사용
+        const result = await upsertActivityRecordBySession(
+          state.sessionId,
+          {
+            title: title,
+            student_name: null, // BasicInfo에는 student_name이 없음
+            student_grade: parseGrade(basicInfo.grade),
+            section_type: basicInfo.sectionType,
+            activity_summary: activitySummary,
+            keywords: emphasisKeywords,
+            generated_draft: draftResult.draftText,
+            final_text: editedText,
+            is_finalized: true,
+            // 추가 데이터는 JSONB 필드에 저장
+            activity_details: {
+              basicInfo: basicInfo,
+              activityDetails: activityDetails,
+            },
+            verification_result: state.verificationResult || null,
+            draft_confidence: normalizeDraftConfidence(draftResult.qualityScore),
+          }
+        );
+
+        if (!result.success) {
+          throw new Error(result.error || '저장에 실패했습니다.');
+        }
       } else {
         // 비회원은 localStorage에만 저장
         const savedRecords = JSON.parse(localStorage.getItem('saved_records') || '[]');
