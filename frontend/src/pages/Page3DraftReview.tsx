@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSchoolActivity } from '../contexts/SchoolActivityContext';
 import { schoolRecordService } from '../services/schoolRecordService';
+import {
+  getActivityRecordBySessionId,
+  addRevisionHistory,
+  updateActivityRecord
+} from '../supabase';
 
 const Page3DraftReview: React.FC = () => {
   const navigate = useNavigate();
@@ -123,6 +128,10 @@ const Page3DraftReview: React.FC = () => {
     setError('');
 
     try {
+      // 원본 초안 저장
+      const originalDraft = draftResult.draftText;
+
+      // 재작성 실행
       const result = await schoolRecordService.regenerateDraft(
         basicInfo,
         activityDetails,
@@ -130,9 +139,36 @@ const Page3DraftReview: React.FC = () => {
         draftResult.draftText,
         regenerateFeedback
       );
+
+      // 재작성된 초안 저장
+      const revisedDraft = result.draftText;
+
+      // revision_history 테이블에 저장
+      const recordResult = await getActivityRecordBySessionId(state.sessionId);
+      if (recordResult.success && recordResult.data) {
+        const activityRecordId = recordResult.data.id;
+
+        // revision_history에 저장
+        await addRevisionHistory({
+          activity_record_id: activityRecordId,
+          original_draft: originalDraft,
+          revision_request: regenerateFeedback,
+          revised_draft: revisedDraft,
+        });
+
+        // activity_record의 generated_draft 업데이트
+        await updateActivityRecord(activityRecordId, {
+          generated_draft: revisedDraft,
+          draft_confidence: result.qualityScore ? result.qualityScore / 100 : undefined,
+        });
+
+        console.log('[Page3] revision_history 및 activity_record 저장 완료');
+      }
+
       setDraftResult(result);
       setRegenerateFeedback('');
     } catch (err: any) {
+      console.error('[Page3] 재작성 오류:', err);
       setError(err.message || '재작성 중 오류가 발생했습니다.');
     } finally {
       setIsRegenerating(false);

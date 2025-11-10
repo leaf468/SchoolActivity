@@ -5,9 +5,10 @@ import {
   getMyProfile,
   updateMyProfile,
   getMyTodos,
-  createTodo,
-  updateTodo,
-  deleteTodo,
+  createTodo as createTodoSupabase,
+  updateTodo as updateTodoSupabase,
+  toggleTodo as toggleTodoSupabase,
+  deleteTodo as deleteTodoSupabase,
   getMyActivityRecords,
   deleteActivityRecord,
 } from '../supabase';
@@ -19,18 +20,13 @@ import SignupModal from './SignupModal';
 import CommonFooter from './CommonFooter';
 import { getUniversitySlogan } from '../data/universitySlogans';
 
-// 로컬 Todo 인터페이스 (호환성 유지)
-interface Todo {
-  id: string;
-  text: string;
-  done: boolean;
-  dueDate?: string;
-}
-
 const MyPage: React.FC = () => {
   const { user, isAuthenticated, isGuest, signOut } = useAuth();
   const [records, setRecords] = useState<ActivityRecord[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // 편집 모드 상태
+  const [isEditing, setIsEditing] = useState(false);
 
   // School info
   const [school, setSchool] = useState('');
@@ -43,7 +39,7 @@ const MyPage: React.FC = () => {
   const [universitySlogan, setUniversitySlogan] = useState('');
 
   // Todo & Calendar
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const [todos, setTodos] = useState<TodoType[]>([]);
   const [newTodo, setNewTodo] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -76,31 +72,55 @@ const MyPage: React.FC = () => {
     }
   }, [user?.id]);
 
+  const fetchTodos = React.useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      const result = await getMyTodos();
+
+      if (result.success && result.data) {
+        setTodos(result.data);
+      } else {
+        console.error('할 일 조회 실패:', result.error);
+        setTodos([]);
+      }
+    } catch (err: any) {
+      console.error('할 일 조회 중 오류:', err);
+      setTodos([]);
+    }
+  }, [user?.id]);
+
+  const fetchProfile = React.useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      const result = await getMyProfile();
+
+      if (result.success && result.data) {
+        const profile = result.data;
+        setSchool(profile.school || '');
+        setGrade(profile.grade || '1');
+        setSemester(profile.semester || '1');
+        setTargetUniversity(profile.target_university || '');
+        setTargetMajor(profile.target_major || '');
+        setUniversitySlogan(profile.university_slogan || '');
+      } else {
+        console.error('프로필 조회 실패:', result.error);
+      }
+    } catch (err: any) {
+      console.error('프로필 조회 중 오류:', err);
+    }
+  }, [user?.id]);
+
   useEffect(() => {
     if (isAuthenticated && user) {
       fetchRecords();
-
-      // Load school info
-      const saved = localStorage.getItem(`user_${user.id}_info`);
-      if (saved) {
-        const data = JSON.parse(saved);
-        setSchool(data.school || '');
-        setGrade(data.grade || '1');
-        setSemester(data.semester || '1');
-        setTargetUniversity(data.targetUniversity || '');
-        setTargetMajor(data.targetMajor || '');
-        setUniversitySlogan(data.universitySlogan || '');
-      }
-
-      // Load todos
-      const savedTodos = localStorage.getItem(`user_${user.id}_todos`);
-      if (savedTodos) {
-        setTodos(JSON.parse(savedTodos));
-      }
+      fetchTodos();
+      fetchProfile();
     } else {
       setLoading(false);
     }
-  }, [isAuthenticated, user, fetchRecords]);
+  }, [isAuthenticated, user, fetchRecords, fetchTodos, fetchProfile]);
 
   const handleUniversityChange = (value: string) => {
     setTargetUniversity(value);
@@ -111,50 +131,78 @@ const MyPage: React.FC = () => {
     }
   };
 
-  const saveUserInfo = () => {
-    if (user) {
-      localStorage.setItem(`user_${user.id}_info`, JSON.stringify({
+  const handleSaveProfile = async () => {
+    if (!user) return;
+
+    try {
+      const result = await updateMyProfile({
         school,
         grade,
         semester,
-        targetUniversity,
-        targetMajor,
-        universitySlogan,
-      }));
+        target_university: targetUniversity,
+        target_major: targetMajor,
+        university_slogan: universitySlogan,
+      });
+
+      if (result.success) {
+        setIsEditing(false);
+        alert('프로필이 저장되었습니다.');
+      } else {
+        alert('프로필 저장 실패: ' + (result.error || '알 수 없는 오류'));
+      }
+    } catch (err: any) {
+      alert('프로필 저장 실패: ' + (err.message || '알 수 없는 오류'));
     }
   };
 
-  const saveTodos = (newTodos: Todo[]) => {
-    if (user) {
-      localStorage.setItem(`user_${user.id}_todos`, JSON.stringify(newTodos));
-      setTodos(newTodos);
-    }
-  };
-
-  const addTodo = () => {
+  const addTodo = async () => {
     if (!newTodo.trim()) return;
-    const updated = [
-      ...todos,
-      {
-        id: Date.now().toString(),
+
+    try {
+      const result = await createTodoSupabase({
         text: newTodo,
         done: false,
-        dueDate: selectedDate.toISOString(),
-      },
-    ];
-    saveTodos(updated);
-    setNewTodo('');
-    setShowDatePicker(false);
+        due_date: selectedDate.toISOString(),
+      });
+
+      if (result.success && result.data) {
+        setTodos([...todos, result.data]);
+        setNewTodo('');
+        setShowDatePicker(false);
+      } else {
+        alert('할 일 추가 실패: ' + (result.error || '알 수 없는 오류'));
+      }
+    } catch (err: any) {
+      alert('할 일 추가 실패: ' + (err.message || '알 수 없는 오류'));
+    }
   };
 
-  const toggleTodo = (id: string) => {
-    const updated = todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
-    saveTodos(updated);
+  const toggleTodo = async (id: string) => {
+    try {
+      const result = await toggleTodoSupabase(id);
+
+      if (result.success && result.data) {
+        setTodos(todos.map((t) => (t.id === id ? result.data : t)));
+      } else {
+        alert('할 일 상태 변경 실패: ' + (result.error || '알 수 없는 오류'));
+      }
+    } catch (err: any) {
+      alert('할 일 상태 변경 실패: ' + (err.message || '알 수 없는 오류'));
+    }
   };
 
-  const deleteTodo = (id: string) => {
-    const updated = todos.filter((t) => t.id !== id);
-    saveTodos(updated);
+  const handleDeleteTodo = async (id: string) => {
+    try {
+      const result = await deleteTodoSupabase(id);
+
+      if (result.success) {
+        setTodos(todos.filter((t) => t.id !== id));
+      } else {
+        alert('할 일 삭제 실패: ' + (result.error || '알 수 없는 오류'));
+      }
+    } catch (err: any) {
+      alert('할 일 삭제 실패: ' + (err.message || '알 수 없는 오류'));
+    }
   };
 
   const handleDelete = async (recordId: string) => {
@@ -185,8 +233,8 @@ const MyPage: React.FC = () => {
   // Get todos for specific date
   const getTodosForDate = (date: Date) => {
     return todos.filter((todo) => {
-      if (!todo.dueDate) return false;
-      const todoDate = new Date(todo.dueDate);
+      if (!todo.due_date) return false;
+      const todoDate = new Date(todo.due_date);
       return (
         todoDate.getDate() === date.getDate() &&
         todoDate.getMonth() === date.getMonth() &&
@@ -318,7 +366,35 @@ const MyPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* School Info */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-4">현재 정보</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-gray-900">현재 정보</h3>
+              {!isEditing ? (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                >
+                  편집
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSaveProfile}
+                    className="px-3 py-1 text-sm bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors"
+                  >
+                    저장
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditing(false);
+                      fetchProfile(); // 취소 시 원래 데이터로 복원
+                    }}
+                    className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                  >
+                    취소
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="space-y-3">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">학교</label>
@@ -326,9 +402,11 @@ const MyPage: React.FC = () => {
                   type="text"
                   value={school}
                   onChange={(e) => setSchool(e.target.value)}
-                  onBlur={saveUserInfo}
+                  disabled={!isEditing}
                   placeholder="학교명 입력"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900"
+                  className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 ${
+                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  }`}
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -336,11 +414,11 @@ const MyPage: React.FC = () => {
                   <label className="block text-xs text-gray-500 mb-1">학년</label>
                   <select
                     value={grade}
-                    onChange={(e) => {
-                      setGrade(e.target.value);
-                      saveUserInfo();
-                    }}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900"
+                    onChange={(e) => setGrade(e.target.value)}
+                    disabled={!isEditing}
+                    className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 ${
+                      !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                    }`}
                   >
                     <option value="1">1학년</option>
                     <option value="2">2학년</option>
@@ -351,11 +429,11 @@ const MyPage: React.FC = () => {
                   <label className="block text-xs text-gray-500 mb-1">학기</label>
                   <select
                     value={semester}
-                    onChange={(e) => {
-                      setSemester(e.target.value);
-                      saveUserInfo();
-                    }}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900"
+                    onChange={(e) => setSemester(e.target.value)}
+                    disabled={!isEditing}
+                    className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 ${
+                      !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                    }`}
                   >
                     <option value="1">1학기</option>
                     <option value="2">2학기</option>
@@ -375,10 +453,16 @@ const MyPage: React.FC = () => {
                   <input
                     type="text"
                     value={targetUniversity}
-                    onChange={(e) => handleUniversityChange(e.target.value)}
-                    onBlur={saveUserInfo}
+                    onChange={(e) => {
+                      if (isEditing) {
+                        handleUniversityChange(e.target.value);
+                      }
+                    }}
+                    disabled={!isEditing}
                     placeholder="예: 서울대학교"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900"
+                    className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 ${
+                      !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                    }`}
                   />
                 </div>
                 <div>
@@ -387,9 +471,11 @@ const MyPage: React.FC = () => {
                     type="text"
                     value={targetMajor}
                     onChange={(e) => setTargetMajor(e.target.value)}
-                    onBlur={saveUserInfo}
+                    disabled={!isEditing}
                     placeholder="예: 컴퓨터공학과"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900"
+                    className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 ${
+                      !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                    }`}
                   />
                 </div>
               </div>
@@ -398,10 +484,12 @@ const MyPage: React.FC = () => {
                 <textarea
                   value={universitySlogan}
                   onChange={(e) => setUniversitySlogan(e.target.value)}
-                  onBlur={saveUserInfo}
+                  disabled={!isEditing}
                   placeholder="목표 대학의 슬로건이나 비전 입력"
                   rows={2}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 resize-none"
+                  className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 resize-none ${
+                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                  }`}
                 />
               </div>
             </div>
@@ -471,7 +559,7 @@ const MyPage: React.FC = () => {
                         {todo.text}
                       </span>
                       <button
-                        onClick={() => deleteTodo(todo.id)}
+                        onClick={() => handleDeleteTodo(todo.id)}
                         className="text-gray-400 hover:text-red-600 text-xs"
                       >
                         삭제
