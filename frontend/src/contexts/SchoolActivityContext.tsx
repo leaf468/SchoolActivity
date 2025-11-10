@@ -135,6 +135,10 @@ interface SchoolActivityContextValue {
   state: SchoolActivityState;
   dispatch: React.Dispatch<SchoolActivityAction>;
 
+  // Direct state access (for new features)
+  studentInfo: SchoolActivityState['studentInfo'];
+  allRecords: SchoolActivityState['allRecords'];
+
   // Helper functions
   setBasicInfo: (info: BasicInfo) => void;
   setActivityDetails: (details: ActivityDetails) => void;
@@ -275,6 +279,8 @@ export function SchoolActivityProvider({ children }: { children: ReactNode }) {
   const value: SchoolActivityContextValue = {
     state,
     dispatch,
+    studentInfo: state.studentInfo,
+    allRecords: state.allRecords,
     setBasicInfo,
     setActivityDetails,
     setEmphasisKeywords,
