@@ -173,7 +173,7 @@ const Page4FinalEdit: React.FC = () => {
   if (!basicInfo || !activityDetails || !draftResult) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 flex flex-col">
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -299,6 +299,45 @@ const Page4FinalEdit: React.FC = () => {
               className="w-full sm:w-auto px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition"
             >
               🔄 새로 작성하기
+            </button>
+          </div>
+        </div>
+
+        {/* 새로운 기능 안내 섹션 */}
+        <div className="mt-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-lg p-6 border-2 border-purple-200">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">🚀 AI 분석 도구 활용하기</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <button
+              onClick={() => navigate('/student/comparison')}
+              className="p-4 bg-white rounded-lg border-2 border-purple-300 hover:border-purple-400 hover:shadow-md transition"
+            >
+              <div className="text-purple-600 text-2xl mb-2">📊</div>
+              <h4 className="font-semibold text-gray-800 mb-1">합격자 비교</h4>
+              <p className="text-xs text-gray-600">내 생기부를 합격자와 비교 분석</p>
+            </button>
+            <button
+              onClick={() => navigate('/student/activity-recommendation')}
+              className="p-4 bg-white rounded-lg border-2 border-blue-300 hover:border-blue-400 hover:shadow-md transition"
+            >
+              <div className="text-blue-600 text-2xl mb-2">💡</div>
+              <h4 className="font-semibold text-gray-800 mb-1">활동 추천</h4>
+              <p className="text-xs text-gray-600">다음 학기 활동 추천</p>
+            </button>
+            <button
+              onClick={() => navigate('/student/writing-style')}
+              className="p-4 bg-white rounded-lg border-2 border-green-300 hover:border-green-400 hover:shadow-md transition"
+            >
+              <div className="text-green-600 text-2xl mb-2">✍️</div>
+              <h4 className="font-semibold text-gray-800 mb-1">작성 스타일</h4>
+              <p className="text-xs text-gray-600">합격자 스타일로 개선</p>
+            </button>
+            <button
+              onClick={() => navigate('/student/future-plan')}
+              className="p-4 bg-white rounded-lg border-2 border-orange-300 hover:border-orange-400 hover:shadow-md transition"
+            >
+              <div className="text-orange-600 text-2xl mb-2">🎯</div>
+              <h4 className="font-semibold text-gray-800 mb-1">미래 설계</h4>
+              <p className="text-xs text-gray-600">진로 로드맵 & 면접 대비</p>
             </button>
           </div>
         </div>

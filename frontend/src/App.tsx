@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { SchoolActivityProvider } from "./contexts/SchoolActivityContext";
+import { TeacherProvider } from "./contexts/TeacherContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { trackPageView } from "./utils/analytics";
 
-// SchoolActivity Pages
+// Student Pages
 import Landing from './pages/Landing';
 import Page1BasicInfo from './pages/Page1BasicInfo';
 import Page2ActivityInput from './pages/Page2ActivityInput';
@@ -12,6 +13,20 @@ import Page3DraftReview from './pages/Page3DraftReview';
 import Page4FinalEdit from './pages/Page4FinalEdit';
 import MyPage from './components/MyPage';
 import InitialAuthPopup from './components/InitialAuthPopup';
+
+// New Student Pages
+import StudentComparisonPage from './pages/StudentComparisonPage';
+import StudentActivityRecommendationPage from './pages/StudentActivityRecommendationPage';
+import StudentWritingStylePage from './pages/StudentWritingStylePage';
+import StudentFuturePlanPage from './pages/StudentFuturePlanPage';
+
+// Teacher Pages
+import TeacherPage1BasicInfo from './pages/TeacherPage1BasicInfo';
+import TeacherPage2StudentList from './pages/TeacherPage2StudentList';
+import TeacherPage3BatchReview from './pages/TeacherPage3BatchReview';
+
+// New Teacher Pages
+import TeacherComparisonDashboard from './pages/TeacherComparisonDashboard';
 
 // GA 페이지뷰 추적 컴포넌트
 function PageViewTracker() {
@@ -29,10 +44,13 @@ function PageViewTracker() {
 function getPageTitle(pathname: string): string {
   const titleMap: Record<string, string> = {
     '/': '랜딩 페이지',
-    '/page1': '기본 정보 입력',
-    '/page2': '활동 내용 입력',
-    '/page3': '초안 생성 및 검토',
-    '/page4': '최종 첨삭 및 저장',
+    '/page1': '학생 - 기본 정보 입력',
+    '/page2': '학생 - 활동 내용 입력',
+    '/page3': '학생 - 초안 생성 및 검토',
+    '/page4': '학생 - 최종 첨삭 및 저장',
+    '/teacher/basic': '선생님 - 기본 정보 입력',
+    '/teacher/students': '선생님 - 학생 관리',
+    '/teacher/review': '선생님 - 일괄 생성 및 검토',
   };
 
   return titleMap[pathname] || '생활기록부 AI 작성';
@@ -64,11 +82,27 @@ function AppContent() {
       {showAuthPopup && <InitialAuthPopup onClose={() => setShowAuthPopup(false)} />}
       <Routes>
         <Route path="/" element={<Landing />} />
+
+        {/* Student Routes */}
         <Route path="/page1" element={<Page1BasicInfo />} />
         <Route path="/page2" element={<Page2ActivityInput />} />
         <Route path="/page3" element={<Page3DraftReview />} />
         <Route path="/page4" element={<Page4FinalEdit />} />
         <Route path="/mypage" element={<MyPage />} />
+
+        {/* New Student Features */}
+        <Route path="/student/comparison" element={<StudentComparisonPage />} />
+        <Route path="/student/activity-recommendation" element={<StudentActivityRecommendationPage />} />
+        <Route path="/student/writing-style" element={<StudentWritingStylePage />} />
+        <Route path="/student/future-plan" element={<StudentFuturePlanPage />} />
+
+        {/* Teacher Routes */}
+        <Route path="/teacher/basic" element={<TeacherPage1BasicInfo />} />
+        <Route path="/teacher/students" element={<TeacherPage2StudentList />} />
+        <Route path="/teacher/review" element={<TeacherPage3BatchReview />} />
+
+        {/* New Teacher Features */}
+        <Route path="/teacher/comparison" element={<TeacherComparisonDashboard />} />
       </Routes>
     </>
   );
@@ -78,10 +112,12 @@ function App() {
   return (
     <AuthProvider>
       <SchoolActivityProvider>
-        <Router>
-          <PageViewTracker />
-          <AppContent />
-        </Router>
+        <TeacherProvider>
+          <Router>
+            <PageViewTracker />
+            <AppContent />
+          </Router>
+        </TeacherProvider>
       </SchoolActivityProvider>
     </AuthProvider>
   );

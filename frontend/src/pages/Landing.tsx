@@ -18,9 +18,9 @@ export default function Landing() {
     trackMainPageVisit();
   }, []);
 
-  const handleGetStarted = () => {
-    trackButtonClick('시작하기', 'Landing');
-    navigate('/page1');
+  const handleGetStarted = (mode: 'student' | 'teacher') => {
+    trackButtonClick(mode === 'student' ? '학생용_시작' : '선생님용_시작', 'Landing');
+    navigate(mode === 'student' ? '/page1' : '/teacher/basic');
   };
 
   return (
@@ -50,19 +50,39 @@ export default function Landing() {
             교사의 업무 부담을 줄이고, 학생의 성장을 더 잘 표현할 수 있습니다.
           </p>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleGetStarted}
-            className="inline-flex items-center px-10 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-200"
-          >
-            <DocumentTextIcon className="w-6 h-6 mr-2" />
-            무료로 시작하기
-          </motion.button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleGetStarted('student')}
+              className="inline-flex items-center px-10 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <AcademicCapIcon className="w-6 h-6 mr-2" />
+              학생용 시작하기
+            </motion.button>
 
-          <p className="mt-4 text-sm text-gray-500">
-            회원가입 없이 바로 시작 가능 · 무료 체험
-          </p>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleGetStarted('teacher')}
+              className="inline-flex items-center px-10 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <DocumentTextIcon className="w-6 h-6 mr-2" />
+              선생님용 시작하기
+            </motion.button>
+          </div>
+
+          <div className="mt-6 text-center space-y-2">
+            <p className="text-sm text-gray-600">
+              💙 <span className="font-semibold">학생용</span>: 1명의 다양한 분야 생기부 작성
+            </p>
+            <p className="text-sm text-gray-600">
+              💜 <span className="font-semibold">선생님용</span>: 같은 과목/활동의 여러 학생 일괄 작성
+            </p>
+            <p className="mt-4 text-xs text-gray-500">
+              회원가입 없이 바로 시작 가능 · 무료 체험
+            </p>
+          </div>
         </motion.div>
 
         {/* Features Grid */}
@@ -219,15 +239,26 @@ export default function Landing() {
           <p className="text-xl mb-10 opacity-90">
             회원가입 없이 즉시 사용 가능합니다
           </p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleGetStarted}
-            className="inline-flex items-center px-12 py-5 bg-white text-indigo-600 font-bold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-200"
-          >
-            <SparklesIcon className="w-6 h-6 mr-2" />
-            무료로 시작하기
-          </motion.button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleGetStarted('student')}
+              className="inline-flex items-center px-10 py-4 bg-white text-blue-600 font-bold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <AcademicCapIcon className="w-6 h-6 mr-2" />
+              학생용
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleGetStarted('teacher')}
+              className="inline-flex items-center px-10 py-4 bg-white text-purple-600 font-bold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <DocumentTextIcon className="w-6 h-6 mr-2" />
+              선생님용
+            </motion.button>
+          </div>
         </motion.div>
       </div>
 
