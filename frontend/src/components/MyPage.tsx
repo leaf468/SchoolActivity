@@ -18,12 +18,14 @@ import 'react-calendar/dist/Calendar.css';
 import LoginModal from './LoginModal';
 import SignupModal from './SignupModal';
 import CommonFooter from './CommonFooter';
+import RecordDetailModal from './RecordDetailModal';
 import { getUniversitySlogan } from '../data/universitySlogans';
 
 const MyPage: React.FC = () => {
   const { user, isAuthenticated, isGuest, signOut } = useAuth();
   const [records, setRecords] = useState<ActivityRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedRecord, setSelectedRecord] = useState<ActivityRecord | null>(null);
 
   // 편집 모드 상태
   const [isEditing, setIsEditing] = useState(false);
@@ -205,7 +207,12 @@ const MyPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (recordId: string) => {
+  const handleDelete = async (recordId: string, e?: React.MouseEvent) => {
+    // 이벤트 버블링 방지
+    if (e) {
+      e.stopPropagation();
+    }
+
     if (!window.confirm('삭제하시겠습니까?')) return;
 
     try {
@@ -218,6 +225,15 @@ const MyPage: React.FC = () => {
       }
     } catch (err: any) {
       alert('삭제 실패: ' + (err.message || '알 수 없는 오류'));
+    }
+  };
+
+  const handleRecordUpdate = (updatedRecord: ActivityRecord) => {
+    // 기록 목록 업데이트
+    setRecords(records.map((r) => (r.id === updatedRecord.id ? updatedRecord : r)));
+    // 현재 선택된 기록도 업데이트 (모달에서 즉시 반영되도록)
+    if (selectedRecord && selectedRecord.id === updatedRecord.id) {
+      setSelectedRecord(updatedRecord);
     }
   };
 
@@ -617,7 +633,8 @@ const MyPage: React.FC = () => {
               {records.map((record) => (
                 <div
                   key={record.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition"
+                  onClick={() => setSelectedRecord(record)}
+                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 hover:shadow-md transition cursor-pointer"
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1 min-w-0">
@@ -627,8 +644,8 @@ const MyPage: React.FC = () => {
                       </p>
                     </div>
                     <button
-                      onClick={() => handleDelete(record.id)}
-                      className="text-xs text-gray-400 hover:text-red-600 ml-2"
+                      onClick={(e) => handleDelete(record.id, e)}
+                      className="text-xs text-gray-400 hover:text-red-600 ml-2 z-10"
                     >
                       삭제
                     </button>
@@ -636,6 +653,13 @@ const MyPage: React.FC = () => {
                   <p className="text-sm text-gray-700 line-clamp-3">
                     {record.final_text || record.generated_draft || record.activity_summary || '내용 없음'}
                   </p>
+                  <div className="mt-3 flex items-center text-xs text-gray-500">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    클릭하여 상세보기
+                  </div>
                 </div>
               ))}
             </div>
@@ -644,6 +668,15 @@ const MyPage: React.FC = () => {
       </div>
 
       <CommonFooter />
+
+      {/* Record Detail Modal */}
+      {selectedRecord && (
+        <RecordDetailModal
+          record={selectedRecord}
+          onClose={() => setSelectedRecord(null)}
+          onUpdate={handleRecordUpdate}
+        />
+      )}
 
       <style>{`
         .calendar-wrapper .react-calendar {
