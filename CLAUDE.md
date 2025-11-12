@@ -113,6 +113,126 @@ Core types in `src/types/schoolActivity.ts`:
 - `GeneratedRecord` - AI-generated output with metadata
 - `VerificationResult` - 5-criterion evaluation scores
 
+### Supabase Database Schema
+
+The application uses Supabase for backend data persistence with the following tables:
+
+#### 1. user_profiles
+User profile information (1:1 relationship with auth.users)
+```sql
+- id: UUID (primary key)
+- user_id: UUID (references auth.users, unique)
+- school: TEXT
+- grade: TEXT
+- semester: TEXT
+- target_university: TEXT
+- target_major: TEXT
+- university_slogan: TEXT
+- created_at: TIMESTAMPTZ
+- updated_at: TIMESTAMPTZ (auto-updated via trigger)
+```
+
+**RLS Policies**: Users can only view/insert/update their own profile
+
+#### 2. todos
+User todo list management
+```sql
+- id: UUID (primary key)
+- user_id: UUID (references auth.users)
+- text: TEXT (not null)
+- done: BOOLEAN (default false)
+- due_date: TIMESTAMPTZ
+- created_at: TIMESTAMPTZ
+- updated_at: TIMESTAMPTZ (auto-updated via trigger)
+```
+
+**RLS Policies**: Users can view/insert/update/delete only their own todos
+
+#### 3. activity_records (Core Table)
+Stores complete activity record data including all wizard steps
+```sql
+- id: UUID (primary key)
+- user_id: UUID (references auth.users)
+- session_id: TEXT (tracks wizard session)
+
+-- Page1: Student Basic Info
+- student_name: TEXT
+- student_grade: INTEGER (1-3)
+- desired_major: TEXT
+- track: TEXT (상경계열/공학계열/인문사회계열/자연과학계열/의생명계열)
+- school: TEXT
+- class_number: TEXT
+
+-- Page2: Activity Input
+- section_type: TEXT (subject/autonomy/club/service/career/behavior)
+- subject: TEXT (for 교과세특)
+- activity_summary: TEXT
+- activity_date: TEXT
+- keywords: JSONB (emphasis keywords array)
+- activity_details: JSONB (full activity object)
+
+-- Page3: AI Generated Draft
+- generated_draft: TEXT
+- draft_confidence: NUMERIC(3,2) (0-1 scale)
+- used_few_shots: JSONB (few-shot example IDs)
+- amar_breakdown: JSONB (A-M-A-R structure analysis)
+
+-- Verification Results
+- verification_result: JSONB (complete VerificationResult object)
+
+-- Page4: Final Output
+- final_text: TEXT
+- is_finalized: BOOLEAN (default false)
+
+-- Metadata
+- title: TEXT (display title, e.g. "수학 교과세특 - 2024.03.15")
+- created_at: TIMESTAMPTZ
+- updated_at: TIMESTAMPTZ (auto-updated via trigger)
+```
+
+**Indexes**: user_id, session_id, is_finalized, created_at DESC
+**RLS Policies**: Users can view/insert/update/delete only their own records
+
+#### 4. revision_history
+Tracks revision history for activity records
+```sql
+- id: UUID (primary key)
+- activity_record_id: UUID (references activity_records)
+- user_id: UUID (references auth.users)
+- original_draft: TEXT (not null)
+- revision_request: TEXT
+- revised_draft: TEXT (not null)
+- created_at: TIMESTAMPTZ
+```
+
+**Indexes**: activity_record_id, created_at DESC
+**RLS Policies**: Users can view/insert only their own revision history
+
+#### 5. Database Functions & Triggers
+
+**Auto-create user profile on signup**:
+```sql
+-- Function: public.handle_new_user()
+-- Automatically creates a user_profiles row when a new auth.users row is created
+-- Trigger: on_auth_user_created (AFTER INSERT on auth.users)
+```
+
+**Auto-update timestamps**:
+```sql
+-- Function: public.update_updated_at_column()
+-- Automatically updates updated_at to NOW() on row updates
+-- Applied to: user_profiles, todos, activity_records
+```
+
+#### Database Access Pattern
+
+Frontend interacts with Supabase via:
+- `src/config/supabase.ts` - Supabase client initialization
+- `AuthContext` - Authentication and user session management
+- Direct Supabase client calls for CRUD operations on tables
+
+All tables use Row Level Security (RLS) to ensure users can only access their own data.
+
 ### State Management
 
 **SchoolActivityContext** (`contexts/SchoolActivityContext.tsx`)

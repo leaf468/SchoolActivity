@@ -9,3 +9,5 @@ frontend/.cache/
 frontend/build/
 
 .env.example
+CLAUDE.md
+.claude/
