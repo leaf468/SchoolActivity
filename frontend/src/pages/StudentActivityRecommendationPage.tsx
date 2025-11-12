@@ -212,7 +212,7 @@ const StudentActivityRecommendationPage: React.FC = () => {
                 다른 학기 추천 받기
               </button>
               <button
-                onClick={() => navigate('/page2')}
+                onClick={() => navigate('/input')}
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
               >
                 활동 입력하러 가기

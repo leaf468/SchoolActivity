@@ -20,7 +20,7 @@ export default function Landing() {
 
   const handleGetStarted = (mode: 'student' | 'teacher') => {
     trackButtonClick(mode === 'student' ? '학생용_시작' : '선생님용_시작', 'Landing');
-    navigate(mode === 'student' ? '/page1' : '/teacher/basic');
+    navigate(mode === 'student' ? '/info' : '/teacher/basic');
   };
 
   return (

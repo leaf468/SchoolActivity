@@ -44,10 +44,10 @@ function PageViewTracker() {
 function getPageTitle(pathname: string): string {
   const titleMap: Record<string, string> = {
     '/': '랜딩 페이지',
-    '/page1': '학생 - 기본 정보 입력',
-    '/page2': '학생 - 활동 내용 입력',
-    '/page3': '학생 - 초안 생성 및 검토',
-    '/page4': '학생 - 최종 첨삭 및 저장',
+    '/info': '학생 - 기본 정보 입력',
+    '/input': '학생 - 활동 내용 입력',
+    '/draft': '학생 - 초안 생성 및 검토',
+    '/final': '학생 - 최종 첨삭 및 저장',
     '/teacher/basic': '선생님 - 기본 정보 입력',
     '/teacher/students': '선생님 - 학생 관리',
     '/teacher/review': '선생님 - 일괄 생성 및 검토',
@@ -84,10 +84,10 @@ function AppContent() {
         <Route path="/" element={<Landing />} />
 
         {/* Student Routes */}
-        <Route path="/page1" element={<Page1BasicInfo />} />
-        <Route path="/page2" element={<Page2ActivityInput />} />
-        <Route path="/page3" element={<Page3DraftReview />} />
-        <Route path="/page4" element={<Page4FinalEdit />} />
+        <Route path="/info" element={<Page1BasicInfo />} />
+        <Route path="/input" element={<Page2ActivityInput />} />
+        <Route path="/draft" element={<Page3DraftReview />} />
+        <Route path="/final" element={<Page4FinalEdit />} />
         <Route path="/mypage" element={<MyPage />} />
 
         {/* New Student Features */}

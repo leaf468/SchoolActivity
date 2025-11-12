@@ -178,7 +178,7 @@ const RecordDetailModal: React.FC<RecordDetailModalProps> = ({
                 {record.activity_summary && (
                   <div>
                     <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                      원본 활동 요약
+                      입력한 원본 활동
                     </h4>
                     <p className="text-sm text-gray-600 leading-relaxed">
                       {record.activity_summary}

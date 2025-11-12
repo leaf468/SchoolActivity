@@ -73,7 +73,7 @@ const Page2ActivityInputEnhanced: React.FC = () => {
 
   useEffect(() => {
     if (!basicInfo) {
-      navigate('/page1');
+      navigate('/info');
     }
   }, [basicInfo, navigate]);
 
@@ -113,11 +113,11 @@ const Page2ActivityInputEnhanced: React.FC = () => {
     clearDraft();
     setActivityDetails(activityData);
     setCurrentStep('draft');
-    navigate('/page3');
+    navigate('/draft');
   };
 
   const handlePrev = () => {
-    navigate('/page1');
+    navigate('/info');
   };
 
   const addActivity = (formType: string) => {

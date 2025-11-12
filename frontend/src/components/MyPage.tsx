@@ -378,135 +378,143 @@ const MyPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">마이페이지</h1>
 
-        {/* Profile Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          {/* School Info */}
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-gray-900">현재 정보</h3>
-              {!isEditing ? (
+        {/* Profile Section - Unified */}
+        <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-semibold text-gray-900">프로필 정보</h2>
+            {!isEditing ? (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+              >
+                편집
+              </button>
+            ) : (
+              <div className="flex gap-2">
                 <button
-                  onClick={() => setIsEditing(true)}
-                  className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                  onClick={handleSaveProfile}
+                  className="px-4 py-2 text-sm bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors"
                 >
-                  편집
+                  저장
                 </button>
-              ) : (
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleSaveProfile}
-                    className="px-3 py-1 text-sm bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors"
-                  >
-                    저장
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsEditing(false);
-                      fetchProfile(); // 취소 시 원래 데이터로 복원
-                    }}
-                    className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-                  >
-                    취소
-                  </button>
-                </div>
-              )}
-            </div>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">학교</label>
-                <input
-                  type="text"
-                  value={school}
-                  onChange={(e) => setSchool(e.target.value)}
-                  disabled={!isEditing}
-                  placeholder="학교명 입력"
-                  className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 ${
-                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
-                  }`}
-                />
+                <button
+                  onClick={() => {
+                    setIsEditing(false);
+                    fetchProfile(); // 취소 시 원래 데이터로 복원
+                  }}
+                  className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                >
+                  취소
+                </button>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">학년</label>
-                  <select
-                    value={grade}
-                    onChange={(e) => setGrade(e.target.value)}
-                    disabled={!isEditing}
-                    className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 ${
-                      !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    <option value="1">1학년</option>
-                    <option value="2">2학년</option>
-                    <option value="3">3학년</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">학기</label>
-                  <select
-                    value={semester}
-                    onChange={(e) => setSemester(e.target.value)}
-                    disabled={!isEditing}
-                    className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 ${
-                      !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    <option value="1">1학기</option>
-                    <option value="2">2학기</option>
-                  </select>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Goal Info */}
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-4">목표</h3>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Left Column - Current Info */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-200">
+                현재 정보
+              </h3>
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">목표 대학교</label>
+                  <label className="block text-xs text-gray-500 mb-1">학교</label>
                   <input
                     type="text"
-                    value={targetUniversity}
-                    onChange={(e) => {
-                      if (isEditing) {
-                        handleUniversityChange(e.target.value);
-                      }
-                    }}
+                    value={school}
+                    onChange={(e) => setSchool(e.target.value)}
                     disabled={!isEditing}
-                    placeholder="예: 서울대학교"
+                    placeholder="학교명 입력"
                     className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 ${
                       !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
                     }`}
                   />
                 </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">목표 학과</label>
-                  <input
-                    type="text"
-                    value={targetMajor}
-                    onChange={(e) => setTargetMajor(e.target.value)}
-                    disabled={!isEditing}
-                    placeholder="예: 컴퓨터공학과"
-                    className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 ${
-                      !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
-                    }`}
-                  />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">학년</label>
+                    <select
+                      value={grade}
+                      onChange={(e) => setGrade(e.target.value)}
+                      disabled={!isEditing}
+                      className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 ${
+                        !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <option value="1">1학년</option>
+                      <option value="2">2학년</option>
+                      <option value="3">3학년</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">학기</label>
+                    <select
+                      value={semester}
+                      onChange={(e) => setSemester(e.target.value)}
+                      disabled={!isEditing}
+                      className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 ${
+                        !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <option value="1">1학기</option>
+                      <option value="2">2학기</option>
+                    </select>
+                  </div>
                 </div>
               </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">학교 슬로건</label>
-                <textarea
-                  value={universitySlogan}
-                  onChange={(e) => setUniversitySlogan(e.target.value)}
-                  disabled={!isEditing}
-                  placeholder="목표 대학의 슬로건이나 비전 입력"
-                  rows={2}
-                  className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 resize-none ${
-                    !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
-                  }`}
-                />
+            </div>
+
+            {/* Right Column - Goal Info */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-200">
+                목표
+              </h3>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">목표 대학교</label>
+                    <input
+                      type="text"
+                      value={targetUniversity}
+                      onChange={(e) => {
+                        if (isEditing) {
+                          handleUniversityChange(e.target.value);
+                        }
+                      }}
+                      disabled={!isEditing}
+                      placeholder="예: 서울대학교"
+                      className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 ${
+                        !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">목표 학과</label>
+                    <input
+                      type="text"
+                      value={targetMajor}
+                      onChange={(e) => setTargetMajor(e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="예: 컴퓨터공학과"
+                      className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 ${
+                        !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                      }`}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">학교 슬로건</label>
+                  <textarea
+                    value={universitySlogan}
+                    onChange={(e) => setUniversitySlogan(e.target.value)}
+                    disabled={!isEditing}
+                    placeholder="목표 대학의 슬로건이나 비전 입력"
+                    rows={2}
+                    className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-900 resize-none ${
+                      !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
+                    }`}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -604,7 +612,18 @@ const MyPage: React.FC = () => {
 
         {/* Records Section */}
         <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <h3 className="font-semibold text-gray-900 mb-4">작성 기록</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold text-gray-900">작성 기록</h3>
+            <button
+              onClick={() => (window.location.href = '/')}
+              className="px-4 py-2 text-sm bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              새로운 생활기록부 작성하기
+            </button>
+          </div>
           {records.length === 0 ? (
             <div className="text-center py-12">
               <svg
@@ -708,6 +727,10 @@ const MyPage: React.FC = () => {
           font-size: 0.75rem;
           font-weight: 600;
           text-transform: uppercase;
+          border-bottom: none;
+        }
+        .calendar-wrapper .react-calendar__month-view__weekdays__weekday {
+          border-bottom: none;
         }
         .calendar-wrapper .react-calendar__month-view__days__day--weekend {
           color: #ef4444;

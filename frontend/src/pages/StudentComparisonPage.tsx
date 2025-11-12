@@ -253,7 +253,7 @@ const StudentComparisonPage: React.FC = () => {
                 다시 분석하기
               </button>
               <button
-                onClick={() => navigate('/page4')}
+                onClick={() => navigate('/final')}
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
               >
                 생기부 작성 계속하기

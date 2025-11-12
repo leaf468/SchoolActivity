@@ -97,7 +97,7 @@ const Page1BasicInfo: React.FC = () => {
       });
     }
     setCurrentStep('input');
-    navigate('/page2');
+    navigate('/input');
   };
 
   return (

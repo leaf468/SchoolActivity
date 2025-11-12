@@ -72,7 +72,7 @@ const Page4FinalEdit: React.FC = () => {
 
   useEffect(() => {
     if (!basicInfo || !activityDetails || !draftResult) {
-      navigate('/page1');
+      navigate('/info');
       return;
     }
 
@@ -220,7 +220,7 @@ const Page4FinalEdit: React.FC = () => {
   const handleStartNew = () => {
     if (window.confirm('새로운 생기부를 작성하시겠습니까? 현재 작업 내용은 저장됩니다.')) {
       reset();
-      navigate('/page1');
+      navigate('/info');
     }
   };
 

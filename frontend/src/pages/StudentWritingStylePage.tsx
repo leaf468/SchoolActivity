@@ -325,7 +325,7 @@ A-M-A-R 구조: ${quickResult.hasAmarStructure ? '있음' : '없음'}
                 다른 텍스트 분석하기
               </button>
               <button
-                onClick={() => navigate('/page3')}
+                onClick={() => navigate('/draft')}
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
               >
                 생기부 작성 계속하기

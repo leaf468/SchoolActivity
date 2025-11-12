@@ -73,7 +73,7 @@ const Page3DraftReview: React.FC = () => {
 
     if (!basicInfo || !activityDetails) {
       console.log('[Page3] basicInfo 또는 activityDetails 없음 - Page1로 리다이렉트');
-      navigate('/page1');
+      navigate('/info');
       return;
     }
 
@@ -181,11 +181,11 @@ const Page3DraftReview: React.FC = () => {
 
   const handleNext = () => {
     setCurrentStep('final');
-    navigate('/page4');
+    navigate('/final');
   };
 
   const handlePrev = () => {
-    navigate('/page2');
+    navigate('/input');
   };
 
   if (!basicInfo || !activityDetails) return null;
@@ -292,37 +292,6 @@ const Page3DraftReview: React.FC = () => {
         {/* 초안 표시 */}
         {draftResult && !isGenerating && (
           <div className="space-y-6">
-            {/* 품질 점수 */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-lg font-bold text-gray-800 mb-4">품질 점수</h2>
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  <div className="w-full bg-gray-200 rounded-full h-4">
-                    <div
-                      className={`h-4 rounded-full transition-all ${
-                        draftResult.qualityScore && draftResult.qualityScore >= 80
-                          ? 'bg-green-500'
-                          : draftResult.qualityScore && draftResult.qualityScore >= 60
-                          ? 'bg-yellow-500'
-                          : 'bg-red-500'
-                      }`}
-                      style={{ width: `${draftResult.qualityScore || 0}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-gray-800">
-                  {draftResult.qualityScore || 0}점
-                </div>
-              </div>
-              <p className="text-sm text-gray-600 mt-2">
-                {draftResult.qualityScore && draftResult.qualityScore >= 80
-                  ? '우수한 품질입니다!'
-                  : draftResult.qualityScore && draftResult.qualityScore >= 60
-                  ? '양호한 품질입니다. 재작성으로 개선할 수 있습니다.'
-                  : '재작성을 권장합니다.'}
-              </p>
-            </div>
-
             {/* 추천 키워드 */}
             {draftResult.recommendedKeywords && draftResult.recommendedKeywords.length > 0 && (
               <div className="bg-white rounded-2xl shadow-lg p-6">
