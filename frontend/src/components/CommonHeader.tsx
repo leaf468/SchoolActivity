@@ -6,7 +6,7 @@ import SignupModal from './SignupModal';
 
 const CommonHeader: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isGuest, signOut } = useAuth();
+  const { user, isAuthenticated, isGuest, userMode, signOut } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [targetUniversity, setTargetUniversity] = useState('');
@@ -34,13 +34,25 @@ const CommonHeader: React.FC = () => {
     }
   };
 
+  const handleLogoClick = () => {
+    // Navigate based on authentication state
+    if (isAuthenticated && !isGuest) {
+      // For authenticated users, go to their MyPage
+      const homePath = userMode === 'teacher' ? '/teacher/mypage' : '/mypage';
+      navigate(homePath);
+    } else {
+      // For unauthenticated users, go to Landing page
+      navigate('/');
+    }
+  };
+
   return (
     <>
       <header className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 relative">
             <button
-              onClick={() => navigate('/')}
+              onClick={handleLogoClick}
               className="text-lg font-semibold text-gray-900"
             >
               SchoolActivity
@@ -76,8 +88,16 @@ const CommonHeader: React.FC = () => {
                   </button>
                 </>
               ) : null}
+              {isAuthenticated && !isGuest && (
+                <button
+                  onClick={() => navigate(userMode === 'teacher' ? '/teacher/basic' : '/info')}
+                  className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  + 새 생기부 작성
+                </button>
+              )}
               <button
-                onClick={() => navigate('/mypage')}
+                onClick={() => navigate(userMode === 'teacher' ? '/teacher/mypage' : '/mypage')}
                 className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
               >
                 마이페이지

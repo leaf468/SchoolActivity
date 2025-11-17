@@ -108,6 +108,21 @@ const Page3DraftReview: React.FC = () => {
       );
       console.log('[Page3] generateDraft 성공:', result);
       setDraftResult(result);
+
+      // Save initial draft to database
+      try {
+        const recordResult = await getActivityRecordBySessionId(state.sessionId);
+        if (recordResult.success && recordResult.data) {
+          await updateActivityRecord(recordResult.data.id, {
+            generated_draft: result.draftText,
+            draft_confidence: result.qualityScore ? result.qualityScore / 100 : undefined,
+          });
+          console.log('[Page3] 초기 draft DB 저장 성공');
+        }
+      } catch (dbErr) {
+        console.error('[Page3] 초기 draft DB 저장 실패:', dbErr);
+        // DB 저장 실패해도 UI에는 영향 없도록 함
+      }
     } catch (err: any) {
       console.error('[Page3] generateDraft 실패:', err);
       setError(err.message || '초안 생성 중 오류가 발생했습니다.');

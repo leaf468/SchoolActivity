@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -10,17 +10,41 @@ import {
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import { trackMainPageVisit, trackButtonClick } from '../utils/analytics';
+import { useAuth } from '../contexts/AuthContext';
+import InitialAuthPopup from '../components/InitialAuthPopup';
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { isAuthenticated, isGuest, userMode, setUserMode } = useAuth();
+  const [showAuthPopup, setShowAuthPopup] = useState(false);
+  const [selectedMode, setSelectedMode] = useState<'student' | 'teacher' | null>(null);
 
   useEffect(() => {
     trackMainPageVisit();
   }, []);
 
+  // Auto-redirect authenticated users to their MyPage
+  useEffect(() => {
+    if (isAuthenticated && !isGuest) {
+      const redirectPath = userMode === 'teacher' ? '/teacher/mypage' : '/mypage';
+      navigate(redirectPath);
+    }
+  }, [isAuthenticated, isGuest, userMode, navigate]);
+
   const handleGetStarted = (mode: 'student' | 'teacher') => {
     trackButtonClick(mode === 'student' ? '학생용_시작' : '선생님용_시작', 'Landing');
-    navigate(mode === 'student' ? '/info' : '/teacher/basic');
+
+    // Set user mode
+    setUserMode(mode);
+    setSelectedMode(mode);
+
+    // Show auth popup
+    setShowAuthPopup(true);
+  };
+
+  const handleAuthPopupClose = () => {
+    setShowAuthPopup(false);
+    setSelectedMode(null);
   };
 
   return (
@@ -273,6 +297,9 @@ export default function Landing() {
           </p>
         </div>
       </footer>
+
+      {/* Auth Popup */}
+      {showAuthPopup && <InitialAuthPopup onClose={handleAuthPopupClose} />}
     </div>
   );
 }

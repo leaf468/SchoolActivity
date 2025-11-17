@@ -12,7 +12,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onSwitchToSignup }) =>
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, userMode } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,8 +20,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onSwitchToSignup }) =>
     setLoading(true);
 
     try {
-      await signIn(email, password);
+      await signIn(email, password, userMode || undefined);
       onClose();
+      // Redirect based on user mode
+      const redirectPath = userMode === 'teacher' ? '/teacher/mypage' : '/mypage';
+      window.location.href = redirectPath;
     } catch (err: any) {
       setError('이메일 또는 비밀번호가 올바르지 않습니다');
     } finally {

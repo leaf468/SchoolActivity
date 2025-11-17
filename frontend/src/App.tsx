@@ -12,7 +12,7 @@ import Page2ActivityInput from './pages/Page2ActivityInput';
 import Page3DraftReview from './pages/Page3DraftReview';
 import Page4FinalEdit from './pages/Page4FinalEdit';
 import MyPage from './components/MyPage';
-import InitialAuthPopup from './components/InitialAuthPopup';
+import TeacherMyPage from './pages/TeacherMyPage';
 
 // New Student Pages
 import StudentComparisonPage from './pages/StudentComparisonPage';
@@ -48,6 +48,8 @@ function getPageTitle(pathname: string): string {
     '/input': '학생 - 활동 내용 입력',
     '/draft': '학생 - 초안 생성 및 검토',
     '/final': '학생 - 최종 첨삭 및 저장',
+    '/mypage': '학생 - 마이페이지',
+    '/teacher/mypage': '선생님 - 마이페이지',
     '/teacher/basic': '선생님 - 기본 정보 입력',
     '/teacher/students': '선생님 - 학생 관리',
     '/teacher/review': '선생님 - 일괄 생성 및 검토',
@@ -57,17 +59,7 @@ function getPageTitle(pathname: string): string {
 }
 
 function AppContent() {
-  const { isAuthenticated, isGuest, loading } = useAuth();
-  const [showAuthPopup, setShowAuthPopup] = useState(false);
-
-  useEffect(() => {
-    // Show popup only if user is not authenticated and not a guest
-    if (!loading && !isAuthenticated && !isGuest) {
-      setShowAuthPopup(true);
-    } else {
-      setShowAuthPopup(false);
-    }
-  }, [isAuthenticated, isGuest, loading]);
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -79,7 +71,6 @@ function AppContent() {
 
   return (
     <>
-      {showAuthPopup && <InitialAuthPopup onClose={() => setShowAuthPopup(false)} />}
       <Routes>
         <Route path="/" element={<Landing />} />
 
@@ -97,6 +88,7 @@ function AppContent() {
         <Route path="/student/future-plan" element={<StudentFuturePlanPage />} />
 
         {/* Teacher Routes */}
+        <Route path="/teacher/mypage" element={<TeacherMyPage />} />
         <Route path="/teacher/basic" element={<TeacherPage1BasicInfo />} />
         <Route path="/teacher/students" element={<TeacherPage2StudentList />} />
         <Route path="/teacher/review" element={<TeacherPage3BatchReview />} />

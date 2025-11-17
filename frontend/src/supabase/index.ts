@@ -92,3 +92,31 @@ export {
   getActivityRecordsByGrade,
   getActivityRecordsStats,
 } from './activityRecord.service';
+
+// ========================================
+// 선생님용 세션 및 학생 관리 서비스
+// ========================================
+export {
+  upsertTeacherSession,
+  getMyTeacherSessions,
+  getTeacherSessionBySessionId,
+  completeTeacherSession,
+  deleteTeacherSession,
+  addTeacherStudent,
+  getTeacherStudentsBySession,
+  getTeacherStudentByStudentId,
+  updateTeacherStudent,
+  updateStudentActivity,
+  saveStudentDraft,
+  finalizeStudent,
+  deleteTeacherStudent,
+  getSessionStats,
+  getSessionWithStudents,
+} from './teacherSession.service';
+
+export type {
+  TeacherSessionInput,
+  TeacherSessionRecord,
+  TeacherStudentInput,
+  TeacherStudentRecord,
+} from './teacherSession.service';

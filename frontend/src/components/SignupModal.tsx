@@ -15,7 +15,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ onClose, onSwitchToLogin }) =
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUp, signInWithGoogle, userMode } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +34,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ onClose, onSwitchToLogin }) =
     setLoading(true);
 
     try {
-      await signUp(email, password, name);
+      await signUp(email, password, name, userMode || undefined);
       setSuccess(true);
       setTimeout(() => onSwitchToLogin(), 1500);
     } catch (err: any) {

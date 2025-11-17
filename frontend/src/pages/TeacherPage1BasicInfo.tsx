@@ -108,13 +108,13 @@ const TeacherPage1BasicInfo: React.FC = () => {
             <div className="inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold mb-4">
               👨‍🏫 선생님 모드
             </div>
-            <h1 className="text-4xl font-bold text-gray-800 mb-3">생활기록부 일괄 작성</h1>
-            <p className="text-gray-600">같은 과목/활동의 여러 학생 생기부를 한번에 작성하세요</p>
+            <h1 className="text-4xl font-bold text-gray-900 mb-3">생활기록부 일괄 작성</h1>
+            <p className="text-lg text-gray-600">같은 과목/활동의 여러 학생 생기부를 한번에 작성하세요</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div className="bg-white rounded-2xl shadow-xl p-8">
             {/* 선생님 이름 (선택) */}
-            <div className="mb-8 p-4 bg-gray-50 rounded-lg">
+            <div className="mb-8 p-4 bg-purple-50 rounded-xl border-2 border-purple-100">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 선생님 성함 <span className="text-gray-400">(선택)</span>
               </label>
@@ -287,10 +287,10 @@ const TeacherPage1BasicInfo: React.FC = () => {
             )}
 
             {/* 다음 버튼 */}
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-6 border-t-2 border-gray-100">
               <button
                 onClick={handleNext}
-                className="px-8 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition shadow-md"
+                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-pink-700 transition shadow-lg"
               >
                 다음: 학생 추가 →
               </button>
@@ -298,8 +298,8 @@ const TeacherPage1BasicInfo: React.FC = () => {
           </div>
 
           {/* 진행 표시 */}
-          <div className="mt-8 flex justify-center items-center space-x-2">
-            <div className="w-3 h-3 rounded-full bg-purple-600"></div>
+          <div className="mt-8 flex justify-center items-center space-x-3">
+            <div className="w-3 h-3 rounded-full bg-purple-600 shadow-md"></div>
             <div className="w-3 h-3 rounded-full bg-gray-300"></div>
             <div className="w-3 h-3 rounded-full bg-gray-300"></div>
           </div>

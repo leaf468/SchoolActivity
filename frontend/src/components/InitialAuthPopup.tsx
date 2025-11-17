@@ -11,11 +11,14 @@ interface InitialAuthPopupProps {
 const InitialAuthPopup: React.FC<InitialAuthPopupProps> = ({ onClose }) => {
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
-  const { continueAsGuest } = useAuth();
+  const { continueAsGuest, userMode } = useAuth();
 
   const handleContinueAsGuest = () => {
     continueAsGuest();
     onClose();
+    // Redirect based on user mode
+    const redirectPath = userMode === 'teacher' ? '/teacher/basic' : '/info';
+    window.location.href = redirectPath;
   };
 
   if (showLogin) {

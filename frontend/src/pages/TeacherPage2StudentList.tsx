@@ -247,8 +247,8 @@ const TeacherPage2StudentList: React.FC = () => {
             <div className="inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold mb-4">
               👨‍🏫 선생님 모드 - 학생 관리
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">학생 목록 및 활동 입력</h1>
-            <p className="text-gray-600">
+            <h1 className="text-4xl font-bold text-gray-900 mb-3">학생 목록 및 활동 입력</h1>
+            <p className="text-lg text-gray-600">
               {state.basicInfo.grade}학년 {state.basicInfo.semester}학기 -{' '}
               {state.basicInfo.sectionType === 'subject' ? `${state.basicInfo.subject} 교과세특` :
                state.basicInfo.sectionType === 'autonomy' ? '자율활동' :
@@ -259,69 +259,80 @@ const TeacherPage2StudentList: React.FC = () => {
 
           <div className="bg-white rounded-2xl shadow-xl p-8">
             {/* 학생 추가 버튼 */}
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
-                학생 목록 ({state.students.length}명)
-              </h2>
+            <div className="flex items-center justify-between mb-8 pb-6 border-b-2 border-gray-100">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">학생 목록</h2>
+                <p className="text-sm text-purple-600 mt-1">{state.students.length}명의 학생이 등록되었습니다</p>
+              </div>
               <button
                 onClick={() => setShowAddModal(true)}
-                className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition shadow-md flex items-center gap-2"
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-pink-700 transition shadow-lg flex items-center gap-2"
               >
-                <span className="text-xl">+</span> 학생 추가
+                <span className="text-xl font-bold">+</span> 학생 추가
               </button>
             </div>
 
             {/* 학생 목록 */}
             {state.students.length === 0 ? (
-              <div className="text-center py-16 bg-gray-50 rounded-xl">
-                <p className="text-gray-500 text-lg mb-4">아직 추가된 학생이 없습니다</p>
+              <div className="text-center py-20 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border-2 border-dashed border-purple-300">
+                <div className="text-6xl mb-4">👨‍🎓</div>
+                <p className="text-gray-700 text-xl font-semibold mb-2">아직 추가된 학생이 없습니다</p>
+                <p className="text-gray-500 mb-6">학생을 추가하여 시작하세요</p>
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition"
+                  className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-pink-700 transition shadow-lg"
                 >
                   첫 학생 추가하기
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {state.students.map((student) => (
                   <div
                     key={student.id}
-                    className={`p-5 border-2 rounded-xl transition ${
+                    className={`p-6 border-2 rounded-2xl transition-all hover:shadow-lg ${
                       hasActivityData(student.id)
-                        ? 'border-green-400 bg-green-50'
-                        : 'border-gray-200 bg-white'
+                        ? 'border-green-400 bg-gradient-to-br from-green-50 to-emerald-50'
+                        : 'border-purple-200 bg-gradient-to-br from-white to-purple-50'
                     }`}
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-bold text-gray-900">{student.name}</h3>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-xl font-bold text-gray-900">{student.name}</h3>
+                          {hasActivityData(student.id) && (
+                            <span className="px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-full">완료</span>
+                          )}
+                        </div>
                         {student.classNumber && (
-                          <p className="text-sm text-gray-600">{student.classNumber}</p>
+                          <p className="text-sm text-gray-600 mb-1">{student.classNumber}</p>
                         )}
                         {student.desiredMajor && (
-                          <p className="text-sm text-purple-600 mt-1">
-                            🎯 {student.desiredMajor} ({student.track})
-                          </p>
+                          <div className="flex items-center gap-1 mt-2">
+                            <span className="text-purple-600 font-semibold text-sm">🎯 {student.desiredMajor}</span>
+                            <span className="text-gray-400 text-sm">·</span>
+                            <span className="text-purple-500 text-sm">{student.track}</span>
+                          </div>
                         )}
                       </div>
                       <button
                         onClick={() => removeStudent(student.id)}
-                        className="text-red-500 hover:text-red-700 font-bold text-xl"
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all hover:text-red-700"
+                        title="학생 삭제"
                       >
-                        ×
+                        <span className="text-2xl font-bold">×</span>
                       </button>
                     </div>
 
                     <button
                       onClick={() => handleOpenActivityModal(student.id)}
-                      className={`w-full py-3 rounded-lg font-semibold transition ${
+                      className={`w-full py-3 rounded-xl font-bold transition-all shadow-md hover:shadow-lg ${
                         hasActivityData(student.id)
-                          ? 'bg-green-600 text-white hover:bg-green-700'
-                          : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                          ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700'
+                          : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700'
                       }`}
                     >
-                      {hasActivityData(student.id) ? '✓ 활동 수정하기' : '활동 입력하기'}
+                      {hasActivityData(student.id) ? '✓ 활동 수정하기' : '📝 활동 입력하기'}
                     </button>
                   </div>
                 ))}
@@ -329,16 +340,16 @@ const TeacherPage2StudentList: React.FC = () => {
             )}
 
             {/* 하단 네비게이션 */}
-            <div className="mt-8 flex justify-between items-center">
+            <div className="mt-8 flex justify-between items-center pt-6 border-t-2 border-gray-100">
               <button
                 onClick={handlePrev}
-                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition-all"
               >
                 ← 이전 단계
               </button>
               <button
                 onClick={handleNext}
-                className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-700 hover:to-pink-700 shadow-lg transition-all"
+                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-pink-700 shadow-lg transition-all"
               >
                 다음: 일괄 생성 →
               </button>
@@ -347,8 +358,8 @@ const TeacherPage2StudentList: React.FC = () => {
 
           {/* 진행 표시 */}
           <div className="mt-8 flex justify-center items-center space-x-3">
-            <div className="w-3 h-3 rounded-full bg-purple-400"></div>
-            <div className="w-3 h-3 rounded-full bg-purple-600"></div>
+            <div className="w-3 h-3 rounded-full bg-purple-400 shadow-sm"></div>
+            <div className="w-3 h-3 rounded-full bg-purple-600 shadow-md"></div>
             <div className="w-3 h-3 rounded-full bg-gray-300"></div>
           </div>
         </div>
@@ -468,13 +479,18 @@ const TeacherPage2StudentList: React.FC = () => {
             <div className="p-6 space-y-6">
               {/* 활동 목록 */}
               {activityForm.map((activity, index) => (
-                <div key={activity.id} className="p-6 bg-gray-50 border-2 border-gray-200 rounded-xl">
+                <div key={activity.id} className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-900">활동 {index + 1}</h3>
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 text-white rounded-lg flex items-center justify-center text-sm font-bold">
+                        {index + 1}
+                      </span>
+                      <h3 className="text-lg font-bold text-gray-900">활동 {index + 1}</h3>
+                    </div>
                     {activityForm.length > 1 && (
                       <button
                         onClick={() => removeActivity(activity.id)}
-                        className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg font-medium"
+                        className="px-4 py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg font-semibold transition-all"
                       >
                         삭제 ×
                       </button>
@@ -504,7 +520,7 @@ const TeacherPage2StudentList: React.FC = () => {
                         onChange={(e) => updateActivity(activity.id, 'content', e.target.value)}
                         placeholder="구체적 활동 내용"
                         rows={4}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all resize-none"
                       />
                     </div>
 
@@ -517,7 +533,7 @@ const TeacherPage2StudentList: React.FC = () => {
                         onChange={(e) => updateActivity(activity.id, 'learnings', e.target.value)}
                         placeholder="배운 점, 성장"
                         rows={2}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all resize-none"
                       />
                     </div>
 
@@ -564,13 +580,13 @@ const TeacherPage2StudentList: React.FC = () => {
 
               <button
                 onClick={addActivity}
-                className="w-full py-4 border-2 border-dashed border-purple-300 text-purple-700 rounded-xl hover:bg-purple-50 font-semibold"
+                className="w-full py-4 border-2 border-dashed border-purple-300 text-purple-700 rounded-2xl hover:bg-purple-50 font-bold text-lg transition-all"
               >
                 + 활동 추가
               </button>
 
               {/* 전체 강조사항 */}
-              <div className="p-6 bg-blue-50 border-2 border-blue-200 rounded-xl">
+              <div className="p-6 bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-2xl">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">전체 강조사항</h3>
                 <div className="space-y-4">
                   <div>
@@ -580,7 +596,7 @@ const TeacherPage2StudentList: React.FC = () => {
                       onChange={(e) => setOverallEmphasis(e.target.value)}
                       placeholder="전체적으로 강조하고 싶은 점"
                       rows={2}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none"
                     />
                   </div>
                   <div>
@@ -624,20 +640,20 @@ const TeacherPage2StudentList: React.FC = () => {
               </div>
             </div>
 
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6">
-              <div className="flex gap-3">
+            <div className="sticky bottom-0 bg-white border-t-2 border-gray-200 p-6 shadow-lg">
+              <div className="flex gap-4">
                 <button
                   onClick={() => {
                     setShowActivityModal(false);
                     setCurrentEditingStudent(null);
                   }}
-                  className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold"
+                  className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-bold transition-all"
                 >
                   취소
                 </button>
                 <button
                   onClick={handleSaveActivity}
-                  className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 font-bold shadow-lg transition-all"
                 >
                   저장
                 </button>

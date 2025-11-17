@@ -3,9 +3,13 @@ import { supabase } from '../supabase/client';
 import * as authService from '../supabase/auth.service';
 import { AuthState } from '../types/auth';
 
+export type UserMode = 'student' | 'teacher' | null;
+
 interface AuthContextType extends AuthState {
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name?: string) => Promise<void>;
+  userMode: UserMode;
+  setUserMode: (mode: UserMode) => void;
+  signIn: (email: string, password: string, userMode?: UserMode) => Promise<void>;
+  signUp: (email: string, password: string, name?: string, userMode?: UserMode) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   continueAsGuest: () => void;
@@ -27,6 +31,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: false,
     isGuest: false,
     loading: true,
+  });
+
+  const [userMode, setUserModeState] = useState<UserMode>(() => {
+    const saved = localStorage.getItem('user_mode');
+    return (saved === 'student' || saved === 'teacher') ? saved : null;
   });
 
   useEffect(() => {
@@ -124,7 +133,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const setUserMode = (mode: UserMode) => {
+    setUserModeState(mode);
+    if (mode) {
+      localStorage.setItem('user_mode', mode);
+    } else {
+      localStorage.removeItem('user_mode');
+    }
+  };
+
+  const signIn = async (email: string, password: string, mode?: UserMode) => {
     // Check for hardcoded admin credentials
     if (email === 'admin@gmail.com' && password === 'admin8') {
       const adminUser = {
@@ -144,6 +162,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isGuest: false,
         loading: false,
       });
+
+      // Set user mode if provided
+      if (mode) {
+        setUserMode(mode);
+      }
       return;
     }
 
@@ -156,13 +179,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!result.success) {
       throw new Error(result.error || '로그인에 실패했습니다.');
     }
+
+    // Set user mode if provided
+    if (mode) {
+      setUserMode(mode);
+    }
     // onAuthStateChange listener가 자동으로 상태를 업데이트함
   };
 
-  const signUp = async (email: string, password: string, name?: string) => {
+  const signUp = async (email: string, password: string, name?: string, mode?: UserMode) => {
     const result = await authService.signUp(email, password, name);
     if (!result.success) {
       throw new Error(result.error || '회원가입에 실패했습니다.');
+    }
+
+    // Set user mode if provided
+    if (mode) {
+      setUserMode(mode);
     }
   };
 
@@ -174,9 +207,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    // Clear localStorage for admin session
+    // Clear localStorage for admin session and user mode
     localStorage.removeItem('admin_session');
     localStorage.removeItem('guest_mode');
+    localStorage.removeItem('user_mode');
 
     const result = await authService.signOut();
     if (!result.success) {
@@ -189,6 +223,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isGuest: false,
       loading: false,
     });
+
+    setUserModeState(null);
   };
 
   const continueAsGuest = () => {
@@ -207,6 +243,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         ...authState,
+        userMode,
+        setUserMode,
         signIn,
         signUp,
         signInWithGoogle,

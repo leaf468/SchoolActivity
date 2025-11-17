@@ -4,7 +4,7 @@ import { useSchoolActivity } from '../contexts/SchoolActivityContext';
 import { useAuth } from '../contexts/AuthContext';
 import { schoolRecordService } from '../services/schoolRecordService';
 import { FinalRecord } from '../types/schoolActivity';
-import { upsertActivityRecordBySession } from '../supabase';
+import { createActivityRecord } from '../supabase';
 
 const Page4FinalEdit: React.FC = () => {
   const navigate = useNavigate();
@@ -161,28 +161,28 @@ const Page4FinalEdit: React.FC = () => {
           normalized_confidence: normalizeDraftConfidence(draftResult.qualityScore),
         });
 
-        // 새 서비스 레이어 사용
-        const result = await upsertActivityRecordBySession(
-          state.sessionId,
-          {
-            title: title,
-            student_name: null, // BasicInfo에는 student_name이 없음
-            student_grade: parseGrade(basicInfo.grade),
-            section_type: basicInfo.sectionType,
-            activity_summary: activitySummary,
-            keywords: emphasisKeywords,
-            generated_draft: draftResult.draftText,
-            final_text: editedText,
-            is_finalized: true,
-            // 추가 데이터는 JSONB 필드에 저장
-            activity_details: {
-              basicInfo: basicInfo,
-              activityDetails: activityDetails,
-            },
-            verification_result: state.verificationResult || null,
-            draft_confidence: normalizeDraftConfidence(draftResult.qualityScore),
-          }
-        );
+        // 항상 새로운 레코드 생성 (update 대신 create)
+        // 저장할 때마다 새로운 unique session_id 생성 (draft와 구분)
+        const finalSessionId = `session_${Date.now()}_finalized_${user?.id || 'guest'}`;
+        const result = await createActivityRecord({
+          session_id: finalSessionId,
+          title: title,
+          student_name: null, // BasicInfo에는 student_name이 없음
+          student_grade: parseGrade(basicInfo.grade),
+          section_type: basicInfo.sectionType,
+          activity_summary: activitySummary,
+          keywords: emphasisKeywords,
+          generated_draft: draftResult.draftText,
+          final_text: editedText,
+          is_finalized: true,
+          // 추가 데이터는 JSONB 필드에 저장
+          activity_details: {
+            basicInfo: basicInfo,
+            activityDetails: activityDetails,
+          },
+          verification_result: state.verificationResult || null,
+          draft_confidence: normalizeDraftConfidence(draftResult.qualityScore),
+        });
 
         if (!result.success) {
           throw new Error(result.error || '저장에 실패했습니다.');
@@ -196,6 +196,11 @@ const Page4FinalEdit: React.FC = () => {
 
       setFinalText(editedText);
       setSaveSuccess(true);
+
+      // 저장 후 새로운 sessionId 생성 (다음 작성이 이 레코드를 덮어쓰지 않도록)
+      setTimeout(() => {
+        reset();
+      }, 100);
 
       setTimeout(() => {
         if (isGuest) {
@@ -347,6 +352,12 @@ const Page4FinalEdit: React.FC = () => {
               className="w-full sm:w-auto px-8 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition shadow-md"
             >
               {isSaving ? '저장 중...' : '💾 최종 저장'}
+            </button>
+            <button
+              onClick={() => navigate('/mypage')}
+              className="w-full sm:w-auto px-6 py-3 border-2 border-green-600 text-green-600 font-semibold rounded-lg hover:bg-green-50 transition"
+            >
+              📂 마이페이지로 이동
             </button>
             <button
               onClick={handleStartNew}
