@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTeacher } from '../contexts/TeacherContext';
 import { TeacherStudentInfo, MajorTrack, SingleActivity, ActivityDetails } from '../types/schoolActivity';
@@ -232,8 +232,13 @@ const TeacherPage2StudentList: React.FC = () => {
     return state.studentActivities.some(a => a.studentId === studentId);
   };
 
+  useEffect(() => {
+    if (!state.basicInfo) {
+      navigate('/teacher/basic');
+    }
+  }, [state.basicInfo, navigate]);
+
   if (!state.basicInfo) {
-    navigate('/teacher/basic');
     return null;
   }
 
