@@ -38,7 +38,10 @@ const SignupModal: React.FC<SignupModalProps> = ({ onClose, onSwitchToLogin }) =
       setSuccess(true);
       setTimeout(() => onSwitchToLogin(), 1500);
     } catch (err: any) {
-      setError('회원가입에 실패했습니다');
+      console.error('회원가입 에러:', err);
+      // 더 자세한 에러 메시지 표시
+      const errorMessage = err.message || '회원가입에 실패했습니다';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -26,20 +26,24 @@ export async function signUp(
   name?: string
 ): Promise<ServiceResponse<User>> {
   try {
+    console.log('회원가입 시도:', { email, hasPassword: !!password, name });
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           name: name || '',
+          display_name: name || '',
         },
-        // 이메일 확인 스킵 (개발 환경용)
-        // 프로덕션에서는 이 옵션을 제거하고 이메일 확인을 사용하세요
-        emailRedirectTo: undefined,
+        // 이메일 확인 없이 바로 로그인 가능하도록 설정
+        emailRedirectTo: window.location.origin,
       },
     });
 
     if (error) {
+      console.error('Supabase 회원가입 에러:', error);
+
       // 이미 존재하는 사용자
       if (error.message.includes('already registered') || error.message.includes('User already registered')) {
         return {
@@ -56,20 +60,36 @@ export async function signUp(
         };
       }
 
-      console.error('회원가입 에러:', error);
-      return { success: false, error: error.message };
+      // 이메일 형식 오류
+      if (error.message.includes('email') || error.message.includes('Email')) {
+        return {
+          success: false,
+          error: '올바른 이메일 형식을 입력해주세요.',
+        };
+      }
+
+      return { success: false, error: `회원가입 실패: ${error.message}` };
     }
 
     if (!data.user) {
-      return { success: false, error: '회원가입에 실패했습니다.' };
+      console.error('회원가입 응답에 user 정보 없음:', data);
+      return { success: false, error: '회원가입에 실패했습니다. 관리자에게 문의하세요.' };
     }
 
-    // 이메일 확인이 필요한 경우 사용자에게 안내
-    console.log('회원가입 성공:', {
-      user: data.user,
-      session: data.session,
+    // 회원가입 성공 로그
+    console.log('✅ 회원가입 성공:', {
+      userId: data.user.id,
+      email: data.user.email,
+      hasSession: !!data.session,
       emailConfirmed: data.user.email_confirmed_at ? '확인됨' : '미확인',
     });
+
+    // 세션이 있으면 자동 로그인된 것
+    if (data.session) {
+      console.log('✅ 자동 로그인 완료');
+    } else {
+      console.log('⚠️  이메일 확인 필요 - Supabase 설정에서 "Enable email confirmations" 비활성화 권장');
+    }
 
     return { success: true, data: data.user };
   } catch (err: any) {
