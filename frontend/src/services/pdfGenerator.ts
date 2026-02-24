@@ -748,6 +748,203 @@ export class PDFGenerator {
 </html>`;
         }
     }
+
+    /**
+     * 생기부 기록들을 PDF 형식의 HTML로 생성
+     */
+    generateSchoolRecordPDF(
+        records: { studentName: string; classNumber?: string; content: string }[],
+        metadata: {
+            grade: number;
+            semester: string;
+            sectionType: string;
+            subject?: string;
+        }
+    ): string {
+        const sectionName = metadata.sectionType === 'subject' ? `${metadata.subject} 교과세특` :
+            metadata.sectionType === 'autonomy' ? '자율활동' :
+            metadata.sectionType === 'club' ? '동아리활동' :
+            metadata.sectionType === 'career' ? '진로활동' :
+            metadata.sectionType === 'behavior' ? '행동특성' : metadata.sectionType;
+
+        const recordsHtml = records.map((record, index) => `
+            <div class="student-record">
+                <div class="student-header">
+                    <span class="student-number">${index + 1}</span>
+                    <span class="student-name">${record.studentName}</span>
+                    ${record.classNumber ? `<span class="class-number">(${record.classNumber})</span>` : ''}
+                </div>
+                <div class="record-content">${record.content}</div>
+            </div>
+        `).join('');
+
+        const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${metadata.grade}학년 ${sectionName} - 생기부</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #333;
+            background: white;
+        }
+
+        .document-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #4f46e5;
+        }
+
+        .document-title {
+            font-size: 18pt;
+            font-weight: bold;
+            color: #1e1b4b;
+            margin-bottom: 5px;
+        }
+
+        .document-subtitle {
+            font-size: 12pt;
+            color: #6b7280;
+        }
+
+        .student-record {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .student-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .student-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: #4f46e5;
+            color: white;
+            border-radius: 50%;
+            font-size: 10pt;
+            font-weight: bold;
+        }
+
+        .student-name {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #1e1b4b;
+        }
+
+        .class-number {
+            font-size: 10pt;
+            color: #6b7280;
+        }
+
+        .record-content {
+            font-size: 11pt;
+            line-height: 1.7;
+            color: #374151;
+            text-align: justify;
+            white-space: pre-wrap;
+        }
+
+        .page-footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            font-size: 9pt;
+            color: #9ca3af;
+        }
+
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .student-record {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            .page-footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="document-header">
+        <h1 class="document-title">${metadata.grade}학년 ${metadata.semester} ${sectionName}</h1>
+        <p class="document-subtitle">생활기록부 세부능력 및 특기사항</p>
+    </div>
+
+    ${recordsHtml}
+
+    <div class="page-footer">
+        생성일: ${new Date().toLocaleDateString('ko-KR')} | 총 ${records.length}명
+    </div>
+</body>
+</html>`;
+
+        return html;
+    }
+
+    /**
+     * 생기부 PDF를 새 창에서 인쇄
+     */
+    printSchoolRecordPDF(
+        records: { studentName: string; classNumber?: string; content: string }[],
+        metadata: {
+            grade: number;
+            semester: string;
+            sectionType: string;
+            subject?: string;
+        }
+    ): void {
+        const html = this.generateSchoolRecordPDF(records, metadata);
+
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(html);
+            printWindow.document.close();
+            printWindow.focus();
+
+            // 잠시 후 인쇄 다이얼로그 열기
+            setTimeout(() => {
+                printWindow.print();
+            }, 500);
+        }
+    }
 }
 
 // Export singleton instance

@@ -1,25 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTeacher } from '../contexts/TeacherContext';
-import { TeacherStudentInfo, MajorTrack, SingleActivity, ActivityDetails } from '../types/schoolActivity';
+import { TeacherStudentInfo, MajorTrack, SingleActivity, ActivityDetails, SectionType } from '../types/schoolActivity';
 import CommonHeader from '../components/CommonHeader';
 import CommonFooter from '../components/CommonFooter';
+import BulkStudentImport from '../components/BulkStudentImport';
+import { ActivityTemplates, ActivityTemplate } from '../components/ActivityTemplates';
+import StudentDataAnalysisPanel from '../components/StudentDataAnalysisPanel';
+import StudentActivityFilePanel from '../components/StudentActivityFilePanel';
+import BulkActivityFileManager from '../components/BulkActivityFileManager';
+import CustomSelect from '../components/ui/CustomSelect';
+import { AnalyzedStudentData } from '../services/studentDataAnalyzer';
+import { BulkFileMapping } from '../services/activityFileAnalyzer';
+
+// 반 정보 인터페이스
+interface ClassInfo {
+  id: string;
+  classNumber: string; // 예: "1반", "2반"
+  students: TeacherStudentInfo[];
+}
 
 const TeacherPage2StudentList: React.FC = () => {
   const navigate = useNavigate();
   const { state, addStudent, removeStudent, setStudentActivity, setCurrentStep } = useTeacher();
 
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showActivityModal, setShowActivityModal] = useState(false);
-  const [currentEditingStudent, setCurrentEditingStudent] = useState<string | null>(null);
+  // 반 관리 상태
+  const [classes, setClasses] = useState<ClassInfo[]>([]);
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+  const [newClassName, setNewClassName] = useState('');
+  const [showAddClassModal, setShowAddClassModal] = useState(false);
 
-  // 학생 추가 폼
-  const [newStudentForm, setNewStudentForm] = useState({
-    name: '',
-    classNumber: '',
-    desiredMajor: '',
-    track: '상경계열' as MajorTrack,
-  });
+  // 학생 입력 상태 (인라인 입력용)
+  const [inlineStudents, setInlineStudents] = useState<Array<{
+    id: string;
+    name: string;
+    studentNumber: string; // 번호
+    desiredMajor: string;
+    track: MajorTrack;
+    files: File[];
+  }>>([]);
+
+  // 모달 상태
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
+  const [showActivityModal, setShowActivityModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showAnalysisPanel, setShowAnalysisPanel] = useState(false);
+  const [showActivityFilePanel, setShowActivityFilePanel] = useState(false);
+  const [showBulkFileManager, setShowBulkFileManager] = useState(false);
+  const [currentEditingStudent, setCurrentEditingStudent] = useState<string | null>(null);
+  const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
 
   // 활동 입력 폼
   const [activityForm, setActivityForm] = useState<SingleActivity[]>([
@@ -30,34 +60,236 @@ const TeacherPage2StudentList: React.FC = () => {
   const [overallKeywords, setOverallKeywords] = useState<string[]>([]);
   const [overallKeywordInput, setOverallKeywordInput] = useState('');
 
-  const handleAddStudent = () => {
-    if (!newStudentForm.name.trim()) {
-      alert('학생 이름을 입력해주세요.');
-      return;
+  // 파일 입력 ref
+  const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+
+  // 초기화: 빈 학생 입력란 10개 생성
+  useEffect(() => {
+    if (inlineStudents.length === 0) {
+      const initialStudents = Array.from({ length: 10 }, (_, i) => ({
+        id: `temp_${Date.now()}_${i}`,
+        name: '',
+        studentNumber: '',
+        desiredMajor: '',
+        track: '상경계열' as MajorTrack,
+        files: [],
+      }));
+      setInlineStudents(initialStudents);
     }
+  }, []);
 
-    const newStudent: TeacherStudentInfo = {
-      id: `student_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      name: newStudentForm.name,
-      classNumber: newStudentForm.classNumber || undefined,
-      desiredMajor: newStudentForm.desiredMajor || undefined,
-      track: newStudentForm.desiredMajor ? newStudentForm.track : undefined,
-    };
+  // 클래스 기반으로 학생 그룹화
+  useEffect(() => {
+    // state.students에서 반별로 그룹화
+    const classMap = new Map<string, TeacherStudentInfo[]>();
 
-    addStudent(newStudent);
-    setNewStudentForm({
-      name: '',
-      classNumber: '',
-      desiredMajor: '',
-      track: '상경계열',
+    state.students.forEach(student => {
+      const classNum = student.classNumber?.match(/(\d+)반/)?.[1] || '미지정';
+      const className = classNum === '미지정' ? '미지정' : `${classNum}반`;
+
+      if (!classMap.has(className)) {
+        classMap.set(className, []);
+      }
+      classMap.get(className)!.push(student);
     });
-    setShowAddModal(false);
+
+    const newClasses: ClassInfo[] = Array.from(classMap.entries()).map(([classNumber, students]) => ({
+      id: `class_${classNumber}`,
+      classNumber,
+      students,
+    }));
+
+    setClasses(newClasses);
+  }, [state.students]);
+
+  // 인라인 학생 추가
+  const addMoreStudentRows = (count: number = 5) => {
+    const newStudents = Array.from({ length: count }, (_, i) => ({
+      id: `temp_${Date.now()}_${i}`,
+      name: '',
+      studentNumber: '',
+      desiredMajor: '',
+      track: '상경계열' as MajorTrack,
+      files: [],
+    }));
+    setInlineStudents([...inlineStudents, ...newStudents]);
   };
 
+  // 인라인 학생 정보 업데이트
+  const updateInlineStudent = (index: number, field: string, value: string) => {
+    const updated = [...inlineStudents];
+    updated[index] = { ...updated[index], [field]: value };
+    setInlineStudents(updated);
+  };
+
+  // 인라인 학생 삭제
+  const removeInlineStudent = (index: number) => {
+    const updated = inlineStudents.filter((_, i) => i !== index);
+    setInlineStudents(updated);
+  };
+
+  // 인라인 학생 파일 추가
+  const handleFileAdd = (index: number, files: FileList | null) => {
+    if (!files) return;
+    const updated = [...inlineStudents];
+    updated[index] = {
+      ...updated[index],
+      files: [...updated[index].files, ...Array.from(files)],
+    };
+    setInlineStudents(updated);
+  };
+
+  // 유효한 학생만 저장
+  const saveValidStudents = () => {
+    const validStudents = inlineStudents.filter(s => s.name.trim() !== '');
+
+    validStudents.forEach(student => {
+      // 이미 존재하는 학생인지 확인
+      const existing = state.students.find(s => s.id === student.id);
+
+      if (!existing) {
+        const classNumber = selectedClassId
+          ? classes.find(c => c.id === selectedClassId)?.classNumber
+          : '';
+
+        const newStudent: TeacherStudentInfo = {
+          id: `student_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+          name: student.name,
+          classNumber: classNumber ? `${classNumber} ${student.studentNumber}번` : student.studentNumber ? `${student.studentNumber}번` : undefined,
+          desiredMajor: student.desiredMajor || undefined,
+          track: student.desiredMajor ? student.track : undefined,
+        };
+
+        addStudent(newStudent);
+      }
+    });
+  };
+
+  // 반 추가
+  const handleAddClass = () => {
+    if (!newClassName.trim()) return;
+
+    const newClass: ClassInfo = {
+      id: `class_${Date.now()}`,
+      classNumber: newClassName.includes('반') ? newClassName : `${newClassName}반`,
+      students: [],
+    };
+
+    setClasses([...classes, newClass]);
+    setSelectedClassId(newClass.id);
+    setNewClassName('');
+    setShowAddClassModal(false);
+
+    // 새 반 선택시 빈 입력란 초기화
+    setInlineStudents(Array.from({ length: 10 }, (_, i) => ({
+      id: `temp_${Date.now()}_${i}`,
+      name: '',
+      studentNumber: '',
+      desiredMajor: '',
+      track: '상경계열' as MajorTrack,
+      files: [],
+    })));
+  };
+
+  // 반 삭제
+  const handleRemoveClass = (classId: string) => {
+    const classToRemove = classes.find(c => c.id === classId);
+    if (!classToRemove) return;
+
+    // 해당 반의 학생들도 삭제
+    classToRemove.students.forEach(student => {
+      removeStudent(student.id);
+    });
+
+    setClasses(classes.filter(c => c.id !== classId));
+    if (selectedClassId === classId) {
+      setSelectedClassId(null);
+    }
+  };
+
+  // 활동 데이터 유무 확인
+  const hasActivityData = (studentId: string): boolean => {
+    return state.studentActivities.some(a => a.studentId === studentId);
+  };
+
+  // 통계
+  const stats = {
+    total: state.students.length,
+    completed: state.students.filter(s => hasActivityData(s.id)).length,
+    pending: state.students.filter(s => !hasActivityData(s.id)).length,
+    classCount: classes.length,
+  };
+
+  // 일괄 추가 핸들러
+  const handleBulkImport = (students: TeacherStudentInfo[]) => {
+    students.forEach(student => addStudent(student));
+  };
+
+  // 템플릿 적용
+  const handleApplyTemplate = (template: ActivityTemplate) => {
+    const newActivities: SingleActivity[] = template.activities.map((act, idx) => ({
+      id: `${Date.now()}_${idx}`,
+      period: act.period || '',
+      role: act.role || '',
+      content: act.content || '',
+      learnings: act.learnings || '',
+      keywords: act.keywords || [],
+    }));
+
+    setActivityForm(newActivities);
+    setOverallEmphasis(template.overallEmphasis || '');
+    setOverallKeywords(template.overallKeywords || []);
+  };
+
+  // AI 분석 결과 적용
+  const handleApplyAnalysis = (analysis: AnalyzedStudentData) => {
+    const newActivities: SingleActivity[] = analysis.keyActivities.slice(0, 5).map((act, idx) => ({
+      id: `${Date.now()}_${idx}`,
+      period: '',
+      role: act.role || '',
+      content: act.activity + (act.achievement ? ` ${act.achievement}` : ''),
+      learnings: act.learnings || '',
+      keywords: [],
+    }));
+
+    if (newActivities.length > 0) {
+      setActivityForm(newActivities);
+    }
+
+    setOverallEmphasis(analysis.summary);
+    setOverallKeywords([...analysis.careerKeywords.slice(0, 3), ...analysis.coreCompetencies.slice(0, 2)]);
+  };
+
+  // 생성된 텍스트 적용
+  const handleApplyGeneratedText = (text: string) => {
+    setActivityForm([{
+      id: Date.now().toString(),
+      period: '',
+      role: '',
+      content: text,
+      learnings: '',
+      keywords: [],
+    }]);
+    setOverallEmphasis('AI 분석 기반 생성');
+  };
+
+  // 파일 분석 초안 적용
+  const handleApplyFileDraft = (draft: string) => {
+    setActivityForm([{
+      id: Date.now().toString(),
+      period: '',
+      role: '',
+      content: draft,
+      learnings: '',
+      keywords: [],
+    }]);
+    setOverallEmphasis('AI 분석 기반 생성');
+  };
+
+  // 활동 모달 열기
   const handleOpenActivityModal = (studentId: string) => {
     setCurrentEditingStudent(studentId);
 
-    // 기존 활동 데이터 로드 (있으면)
     const existingActivity = state.studentActivities.find(a => a.studentId === studentId);
     if (existingActivity) {
       const details = existingActivity.activityDetails;
@@ -67,7 +299,6 @@ const TeacherPage2StudentList: React.FC = () => {
         setOverallKeywords(details.overallKeywords || []);
       }
     } else {
-      // 초기화
       setActivityForm([{ id: '1', period: '', role: '', content: '', learnings: '', keywords: [] }]);
       setOverallEmphasis('');
       setOverallKeywords([]);
@@ -76,6 +307,7 @@ const TeacherPage2StudentList: React.FC = () => {
     setShowActivityModal(true);
   };
 
+  // 활동 저장
   const handleSaveActivity = () => {
     if (!currentEditingStudent) return;
 
@@ -153,6 +385,7 @@ const TeacherPage2StudentList: React.FC = () => {
     setCurrentEditingStudent(null);
   };
 
+  // 활동 추가/삭제/업데이트
   const addActivity = () => {
     setActivityForm([
       ...activityForm,
@@ -202,7 +435,11 @@ const TeacherPage2StudentList: React.FC = () => {
     }
   };
 
+  // 네비게이션
   const handleNext = () => {
+    // 먼저 유효한 학생들 저장
+    saveValidStudents();
+
     if (state.students.length === 0) {
       alert('최소 1명의 학생을 추가해주세요.');
       return;
@@ -228,10 +465,6 @@ const TeacherPage2StudentList: React.FC = () => {
     navigate('/teacher/basic');
   };
 
-  const hasActivityData = (studentId: string): boolean => {
-    return state.studentActivities.some(a => a.studentId === studentId);
-  };
-
   useEffect(() => {
     if (!state.basicInfo) {
       navigate('/teacher/basic');
@@ -242,223 +475,496 @@ const TeacherPage2StudentList: React.FC = () => {
     return null;
   }
 
+  // 섹션 타입 라벨
+  const getSectionLabel = (sectionType: SectionType) => {
+    switch (sectionType) {
+      case 'subject': return `${state.basicInfo?.subject || ''} 교과세특`;
+      case 'autonomy': return '자율활동';
+      case 'club': return '동아리활동';
+      case 'career': return '진로활동';
+      case 'behavior': return '행동특성';
+      default: return '';
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex flex-col">
       <CommonHeader />
 
-      <div className="py-12 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-8">
-            <div className="inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold mb-4">
-              👨‍🏫 선생님 모드 - 학생 관리
+      <div className="flex-1 py-8 px-4">
+        <div className="max-w-7xl mx-auto">
+          {/* 상단 헤더 */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium mb-2">
+                  <span>👨‍🏫</span>
+                  <span>선생님 모드</span>
+                </div>
+                <h1 className="text-2xl font-bold text-gray-900">학생 관리</h1>
+                <p className="text-gray-600 mt-1">
+                  {state.basicInfo.grade}학년 {state.basicInfo.semester}학기 · {getSectionLabel(state.basicInfo.sectionType)}
+                </p>
+              </div>
+
+              {/* 우상단 버튼 그룹 */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowBulkImportModal(true)}
+                  className="px-4 py-2 bg-white border-2 border-indigo-200 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-50 transition flex items-center gap-2 text-sm"
+                >
+                  <span>📋</span>
+                  엑셀에서 일괄 추가
+                </button>
+                {state.students.length > 0 && (
+                  <button
+                    onClick={() => setShowBulkFileManager(true)}
+                    className="px-4 py-2 bg-amber-500 text-white font-semibold rounded-lg hover:bg-amber-600 transition flex items-center gap-2 text-sm"
+                  >
+                    <span>📁</span>
+                    일괄 파일 관리
+                  </button>
+                )}
+              </div>
             </div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-3">학생 목록 및 활동 입력</h1>
-            <p className="text-lg text-gray-600">
-              {state.basicInfo.grade}학년 {state.basicInfo.semester}학기 -{' '}
-              {state.basicInfo.sectionType === 'subject' ? `${state.basicInfo.subject} 교과세특` :
-               state.basicInfo.sectionType === 'autonomy' ? '자율활동' :
-               state.basicInfo.sectionType === 'club' ? '동아리활동' :
-               state.basicInfo.sectionType === 'career' ? '진로활동' : '행동특성'}
-            </p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            {/* 학생 추가 버튼 */}
-            <div className="flex items-center justify-between mb-8 pb-6 border-b-2 border-gray-100">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">학생 목록</h2>
-                <p className="text-sm text-purple-600 mt-1">{state.students.length}명의 학생이 등록되었습니다</p>
-              </div>
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-pink-700 transition shadow-lg flex items-center gap-2"
-              >
-                <span className="text-xl font-bold">+</span> 학생 추가
-              </button>
+          {/* 통계 카드 */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
+              <p className="text-2xl font-bold text-indigo-600">{stats.classCount}</p>
+              <p className="text-sm text-gray-600">등록된 반</p>
             </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
+              <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
+              <p className="text-sm text-gray-600">전체 학생</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
+              <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+              <p className="text-sm text-gray-600">입력 완료</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
+              <p className="text-2xl font-bold text-orange-500">{stats.pending}</p>
+              <p className="text-sm text-gray-600">입력 대기</p>
+            </div>
+          </div>
 
-            {/* 학생 목록 */}
-            {state.students.length === 0 ? (
-              <div className="text-center py-20 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border-2 border-dashed border-purple-300">
-                <div className="text-6xl mb-4">👨‍🎓</div>
-                <p className="text-gray-700 text-xl font-semibold mb-2">아직 추가된 학생이 없습니다</p>
-                <p className="text-gray-500 mb-6">학생을 추가하여 시작하세요</p>
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-pink-700 transition shadow-lg"
-                >
-                  첫 학생 추가하기
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {state.students.map((student) => (
-                  <div
-                    key={student.id}
-                    className={`p-6 border-2 rounded-2xl transition-all hover:shadow-lg ${
-                      hasActivityData(student.id)
-                        ? 'border-green-400 bg-gradient-to-br from-green-50 to-emerald-50'
-                        : 'border-purple-200 bg-gradient-to-br from-white to-purple-50'
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* 좌측: 반 카드 목록 */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gray-100 bg-gray-50">
+                  <h2 className="font-bold text-gray-800 flex items-center gap-2">
+                    <span>🏫</span>
+                    반 목록
+                  </h2>
+                </div>
+
+                <div className="p-3 space-y-2">
+                  {/* 전체 보기 */}
+                  <button
+                    onClick={() => setSelectedClassId(null)}
+                    className={`w-full p-3 rounded-lg text-left transition ${
+                      selectedClassId === null
+                        ? 'bg-indigo-100 border-2 border-indigo-400 text-indigo-800'
+                        : 'bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100'
                     }`}
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-xl font-bold text-gray-900">{student.name}</h3>
-                          {hasActivityData(student.id) && (
-                            <span className="px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-full">완료</span>
-                          )}
-                        </div>
-                        {student.classNumber && (
-                          <p className="text-sm text-gray-600 mb-1">{student.classNumber}</p>
-                        )}
-                        {student.desiredMajor && (
-                          <div className="flex items-center gap-1 mt-2">
-                            <span className="text-purple-600 font-semibold text-sm">🎯 {student.desiredMajor}</span>
-                            <span className="text-gray-400 text-sm">·</span>
-                            <span className="text-purple-500 text-sm">{student.track}</span>
-                          </div>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => removeStudent(student.id)}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all hover:text-red-700"
-                        title="학생 삭제"
-                      >
-                        <span className="text-2xl font-bold">×</span>
-                      </button>
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">전체 보기</span>
+                      <span className="text-sm bg-white px-2 py-0.5 rounded-full">
+                        {state.students.length}명
+                      </span>
                     </div>
+                  </button>
 
-                    <button
-                      onClick={() => handleOpenActivityModal(student.id)}
-                      className={`w-full py-3 rounded-xl font-bold transition-all shadow-md hover:shadow-lg ${
+                  {/* 반별 카드 */}
+                  {classes.map(classInfo => (
+                    <motion.div
+                      key={classInfo.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`relative group p-3 rounded-lg cursor-pointer transition ${
+                        selectedClassId === classInfo.id
+                          ? 'bg-indigo-100 border-2 border-indigo-400'
+                          : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
+                      }`}
+                      onClick={() => setSelectedClassId(classInfo.id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`font-medium ${
+                          selectedClassId === classInfo.id ? 'text-indigo-800' : 'text-gray-700'
+                        }`}>
+                          {classInfo.classNumber}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm bg-white px-2 py-0.5 rounded-full">
+                            {classInfo.students.length}명
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`${classInfo.classNumber}을(를) 삭제하시겠습니까?`)) {
+                                handleRemoveClass(classInfo.id);
+                              }
+                            }}
+                            className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                      {/* 완료율 바 */}
+                      <div className="mt-2 h-1 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-green-500 transition-all"
+                          style={{
+                            width: `${classInfo.students.length > 0
+                              ? (classInfo.students.filter(s => hasActivityData(s.id)).length / classInfo.students.length) * 100
+                              : 0}%`
+                          }}
+                        />
+                      </div>
+                    </motion.div>
+                  ))}
+
+                  {/* 반 추가 버튼 */}
+                  <button
+                    onClick={() => setShowAddClassModal(true)}
+                    className="w-full p-3 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition flex items-center justify-center gap-2"
+                  >
+                    <span className="text-lg">+</span>
+                    <span>반 추가</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 우측: 학생 입력/목록 영역 */}
+            <div className="lg:col-span-3">
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                  <h2 className="font-bold text-gray-800 flex items-center gap-2">
+                    <span>👨‍🎓</span>
+                    {selectedClassId
+                      ? `${classes.find(c => c.id === selectedClassId)?.classNumber} 학생`
+                      : '전체 학생'
+                    }
+                  </h2>
+                  <div className="text-sm text-gray-500">
+                    {selectedClassId
+                      ? `${classes.find(c => c.id === selectedClassId)?.students.length || 0}명`
+                      : `${state.students.length}명`
+                    }
+                  </div>
+                </div>
+
+                {/* 인라인 학생 입력 폼 */}
+                <div className="p-4">
+                  {/* 테이블 헤더 */}
+                  <div className="hidden md:grid grid-cols-12 gap-2 mb-2 px-2 text-sm font-medium text-gray-500">
+                    <div className="col-span-1">번호</div>
+                    <div className="col-span-2">이름</div>
+                    <div className="col-span-2">희망진로</div>
+                    <div className="col-span-2">계열</div>
+                    <div className="col-span-3">첨부파일</div>
+                    <div className="col-span-2">관리</div>
+                  </div>
+
+                  {/* 기존 저장된 학생 목록 */}
+                  {(selectedClassId
+                    ? classes.find(c => c.id === selectedClassId)?.students || []
+                    : state.students
+                  ).map((student, index) => (
+                    <motion.div
+                      key={student.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className={`mb-2 rounded-lg border-2 overflow-hidden ${
                         hasActivityData(student.id)
-                          ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700'
-                          : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700'
+                          ? 'border-green-300 bg-green-50'
+                          : 'border-gray-200 bg-white'
                       }`}
                     >
-                      {hasActivityData(student.id) ? '✓ 활동 수정하기' : '📝 활동 입력하기'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+                      {/* 학생 기본 정보 행 */}
+                      <div
+                        className="grid grid-cols-1 md:grid-cols-12 gap-2 p-3 items-center cursor-pointer hover:bg-gray-50"
+                        onClick={() => setExpandedStudentId(expandedStudentId === student.id ? null : student.id)}
+                      >
+                        <div className="md:col-span-1 flex items-center gap-2">
+                          <span className="w-6 h-6 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center text-xs font-bold">
+                            {index + 1}
+                          </span>
+                          {hasActivityData(student.id) && (
+                            <span className="text-green-600 text-sm">✓</span>
+                          )}
+                        </div>
+                        <div className="md:col-span-2 font-medium text-gray-800">
+                          {student.name}
+                        </div>
+                        <div className="md:col-span-2 text-gray-600 text-sm">
+                          {student.desiredMajor || '-'}
+                        </div>
+                        <div className="md:col-span-2 text-gray-600 text-sm">
+                          {student.track || '-'}
+                        </div>
+                        <div className="md:col-span-3 text-gray-500 text-sm">
+                          <span className="text-indigo-600">
+                            {expandedStudentId === student.id ? '▼ 접기' : '▶ 펼치기'}
+                          </span>
+                        </div>
+                        <div className="md:col-span-2 flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenActivityModal(student.id);
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                              hasActivityData(student.id)
+                                ? 'bg-green-600 text-white hover:bg-green-700'
+                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                            }`}
+                          >
+                            {hasActivityData(student.id) ? '수정' : '입력'}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`${student.name} 학생을 삭제하시겠습니까?`)) {
+                                removeStudent(student.id);
+                              }
+                            }}
+                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
 
-            {/* 하단 네비게이션 */}
-            <div className="mt-8 flex justify-between items-center pt-6 border-t-2 border-gray-100">
-              <button
-                onClick={handlePrev}
-                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition-all"
-              >
-                ← 이전 단계
-              </button>
-              <button
-                onClick={handleNext}
-                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-pink-700 shadow-lg transition-all"
-              >
-                다음: 일괄 생성 →
-              </button>
+                      {/* 확장된 파일 관리 영역 */}
+                      <AnimatePresence>
+                        {expandedStudentId === student.id && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="border-t border-gray-200 bg-gray-50 p-4"
+                          >
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="text-sm font-medium text-gray-700">📎 첨부파일 관리</h4>
+                              <input
+                                type="file"
+                                multiple
+                                className="hidden"
+                                ref={(el) => { fileInputRefs.current[student.id] = el; }}
+                                onChange={(e) => {
+                                  // TODO: 파일 업로드 로직 구현
+                                  console.log('Files:', e.target.files);
+                                }}
+                              />
+                              <button
+                                onClick={() => fileInputRefs.current[student.id]?.click()}
+                                className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition"
+                              >
+                                + 파일 추가
+                              </button>
+                            </div>
+                            <p className="text-sm text-gray-500">
+                              소논문, 포트폴리오, 활동 증빙자료 등을 추가하세요.
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  ))}
+
+                  {/* 구분선 */}
+                  {state.students.length > 0 && (
+                    <div className="my-6 border-t-2 border-dashed border-gray-200 relative">
+                      <span className="absolute left-1/2 -translate-x-1/2 -top-3 bg-white px-4 text-sm text-gray-400">
+                        새 학생 추가
+                      </span>
+                    </div>
+                  )}
+
+                  {/* 인라인 입력 폼 */}
+                  <div className="space-y-2">
+                    {inlineStudents.map((student, index) => (
+                      <div
+                        key={student.id}
+                        className="grid grid-cols-1 md:grid-cols-12 gap-2 p-2 bg-gray-50 rounded-lg items-center"
+                      >
+                        <div className="md:col-span-1">
+                          <span className="text-sm text-gray-500">
+                            {(selectedClassId
+                              ? classes.find(c => c.id === selectedClassId)?.students.length || 0
+                              : state.students.length
+                            ) + index + 1}
+                          </span>
+                        </div>
+                        <div className="md:col-span-2">
+                          <input
+                            type="text"
+                            value={student.name}
+                            onChange={(e) => updateInlineStudent(index, 'name', e.target.value)}
+                            placeholder="이름"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <input
+                            type="text"
+                            value={student.desiredMajor}
+                            onChange={(e) => updateInlineStudent(index, 'desiredMajor', e.target.value)}
+                            placeholder="희망진로"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <CustomSelect
+                            value={student.track}
+                            onChange={(val) => updateInlineStudent(index, 'track', val)}
+                            options={[
+                              { value: '상경계열', label: '상경계열' },
+                              { value: '공학계열', label: '공학계열' },
+                              { value: '인문사회계열', label: '인문사회계열' },
+                              { value: '자연과학계열', label: '자연과학계열' },
+                              { value: '의생명계열', label: '의생명계열' },
+                            ]}
+                            className="text-sm"
+                          />
+                        </div>
+                        <div className="md:col-span-3">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="file"
+                              multiple
+                              className="hidden"
+                              ref={(el) => { fileInputRefs.current[`inline_${index}`] = el; }}
+                              onChange={(e) => handleFileAdd(index, e.target.files)}
+                            />
+                            <button
+                              onClick={() => fileInputRefs.current[`inline_${index}`]?.click()}
+                              className="px-2 py-1.5 text-xs bg-white border border-gray-300 rounded text-gray-600 hover:bg-gray-50"
+                            >
+                              📎 파일
+                            </button>
+                            {student.files.length > 0 && (
+                              <span className="text-xs text-indigo-600">
+                                {student.files.length}개
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="md:col-span-2 flex justify-end">
+                          <button
+                            onClick={() => removeInlineStudent(index)}
+                            className="text-red-500 hover:text-red-700 p-1"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 학생 추가 버튼 */}
+                  <button
+                    onClick={() => addMoreStudentRows(5)}
+                    className="mt-4 w-full py-3 border-2 border-dashed border-gray-300 text-gray-500 rounded-lg hover:border-indigo-400 hover:text-indigo-600 transition flex items-center justify-center gap-2"
+                  >
+                    <span className="text-lg">+</span>
+                    <span>학생 5명 추가</span>
+                  </button>
+                </div>
+              </div>
             </div>
+          </div>
+
+          {/* 하단 네비게이션 */}
+          <div className="mt-8 flex justify-between items-center">
+            <button
+              onClick={handlePrev}
+              className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition"
+            >
+              ← 이전 단계
+            </button>
+            <button
+              onClick={handleNext}
+              className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-lg transition"
+            >
+              다음: 일괄 생성 →
+            </button>
           </div>
 
           {/* 진행 표시 */}
-          <div className="mt-8 flex justify-center items-center space-x-3">
-            <div className="w-3 h-3 rounded-full bg-purple-400 shadow-sm"></div>
-            <div className="w-3 h-3 rounded-full bg-purple-600 shadow-md"></div>
+          <div className="mt-6 flex justify-center items-center space-x-3">
+            <div className="w-3 h-3 rounded-full bg-indigo-300"></div>
+            <div className="w-3 h-3 rounded-full bg-indigo-600"></div>
             <div className="w-3 h-3 rounded-full bg-gray-300"></div>
           </div>
         </div>
       </div>
 
-      {/* 학생 추가 모달 */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">학생 추가</h2>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-3xl font-bold"
-              >
-                ×
-              </button>
-            </div>
+      {/* 반 추가 모달 */}
+      <AnimatePresence>
+        {showAddClassModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-800">반 추가</h2>
+                <button
+                  onClick={() => setShowAddClassModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  학생 이름 <span className="text-red-500">*</span>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  반 이름
                 </label>
                 <input
                   type="text"
-                  value={newStudentForm.name}
-                  onChange={(e) => setNewStudentForm({ ...newStudentForm, name: e.target.value })}
-                  placeholder="예: 홍길동"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  value={newClassName}
+                  onChange={(e) => setNewClassName(e.target.value)}
+                  placeholder="예: 1반, 2반"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleAddClass();
+                  }}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  반/번호 <span className="text-gray-400">(선택)</span>
-                </label>
-                <input
-                  type="text"
-                  value={newStudentForm.classNumber}
-                  onChange={(e) => setNewStudentForm({ ...newStudentForm, classNumber: e.target.value })}
-                  placeholder="예: 3반 12번"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowAddClassModal(false)}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleAddClass}
+                  className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+                >
+                  추가
+                </button>
               </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  희망 진로/전공 <span className="text-gray-400">(선택)</span>
-                </label>
-                <input
-                  type="text"
-                  value={newStudentForm.desiredMajor}
-                  onChange={(e) => setNewStudentForm({ ...newStudentForm, desiredMajor: e.target.value })}
-                  placeholder="예: 경영학과, 컴퓨터공학과"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              {newStudentForm.desiredMajor && (
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">계열</label>
-                  <select
-                    value={newStudentForm.track}
-                    onChange={(e) => setNewStudentForm({ ...newStudentForm, track: e.target.value as MajorTrack })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="상경계열">상경계열</option>
-                    <option value="공학계열">공학계열</option>
-                    <option value="인문사회계열">인문사회계열</option>
-                    <option value="자연과학계열">자연과학계열</option>
-                    <option value="의생명계열">의생명계열</option>
-                  </select>
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleAddStudent}
-                className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold"
-              >
-                추가
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 활동 입력 모달 */}
       {showActivityModal && currentEditingStudent && (
@@ -479,15 +985,83 @@ const TeacherPage2StudentList: React.FC = () => {
                   ×
                 </button>
               </div>
+              {/* 빠른 템플릿 버튼 및 AI 분석 토글 */}
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => setShowTemplateModal(true)}
+                  className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md text-sm flex items-center gap-2"
+                >
+                  ⚡ 빠른 템플릿
+                </button>
+                <button
+                  onClick={() => setShowAnalysisPanel(!showAnalysisPanel)}
+                  className={`px-4 py-2 font-semibold rounded-lg transition-all shadow-md text-sm flex items-center gap-2 ${
+                    showAnalysisPanel
+                      ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white'
+                      : 'bg-gradient-to-r from-pink-600 to-rose-600 text-white hover:from-pink-700 hover:to-rose-700'
+                  }`}
+                >
+                  🤖 {showAnalysisPanel ? 'AI 분석 패널 닫기' : '기존 자료 AI 분석'}
+                </button>
+                <button
+                  onClick={() => setShowActivityFilePanel(!showActivityFilePanel)}
+                  className={`px-4 py-2 font-semibold rounded-lg transition-all shadow-md text-sm flex items-center gap-2 ${
+                    showActivityFilePanel
+                      ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white'
+                      : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600'
+                  }`}
+                >
+                  📄 {showActivityFilePanel ? '파일 분석 패널 닫기' : '소논문/포폴 업로드'}
+                </button>
+              </div>
             </div>
 
             <div className="p-6 space-y-6">
+              {/* AI 분석 패널 */}
+              {showAnalysisPanel && currentEditingStudent && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-6"
+                >
+                  <StudentDataAnalysisPanel
+                    studentName={state.students.find(s => s.id === currentEditingStudent)?.name || ''}
+                    studentGrade={state.basicInfo?.grade}
+                    desiredMajor={state.students.find(s => s.id === currentEditingStudent)?.desiredMajor}
+                    track={state.students.find(s => s.id === currentEditingStudent)?.track}
+                    sectionType={state.basicInfo?.sectionType || 'subject'}
+                    onAnalysisComplete={handleApplyAnalysis}
+                    onGeneratedText={handleApplyGeneratedText}
+                  />
+                </motion.div>
+              )}
+
+              {/* 활동 파일 분석 패널 */}
+              {showActivityFilePanel && currentEditingStudent && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-6"
+                >
+                  <StudentActivityFilePanel
+                    studentName={state.students.find(s => s.id === currentEditingStudent)?.name || ''}
+                    studentId={currentEditingStudent}
+                    sectionType={state.basicInfo?.sectionType || 'subject'}
+                    subject={state.basicInfo?.subject}
+                    desiredMajor={state.students.find(s => s.id === currentEditingStudent)?.desiredMajor}
+                    onSelectDraft={handleApplyFileDraft}
+                  />
+                </motion.div>
+              )}
+
               {/* 활동 목록 */}
               {activityForm.map((activity, index) => (
-                <div key={activity.id} className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl">
+                <div key={activity.id} className="p-6 bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-2xl">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <span className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 text-white rounded-lg flex items-center justify-center text-sm font-bold">
+                      <span className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-lg flex items-center justify-center text-sm font-bold">
                         {index + 1}
                       </span>
                       <h3 className="text-lg font-bold text-gray-900">활동 {index + 1}</h3>
@@ -525,7 +1099,7 @@ const TeacherPage2StudentList: React.FC = () => {
                         onChange={(e) => updateActivity(activity.id, 'content', e.target.value)}
                         placeholder="구체적 활동 내용"
                         rows={4}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all resize-none"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none"
                       />
                     </div>
 
@@ -538,7 +1112,7 @@ const TeacherPage2StudentList: React.FC = () => {
                         onChange={(e) => updateActivity(activity.id, 'learnings', e.target.value)}
                         placeholder="배운 점, 성장"
                         rows={2}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all resize-none"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none"
                       />
                     </div>
 
@@ -549,7 +1123,7 @@ const TeacherPage2StudentList: React.FC = () => {
                           type="text"
                           value={activityKeywordInput}
                           onChange={(e) => setActivityKeywordInput(e.target.value)}
-                          onKeyPress={(e) => {
+                          onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               addKeywordToActivity(activity.id, activityKeywordInput);
                               setActivityKeywordInput('');
@@ -563,7 +1137,7 @@ const TeacherPage2StudentList: React.FC = () => {
                             addKeywordToActivity(activity.id, activityKeywordInput);
                             setActivityKeywordInput('');
                           }}
-                          className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm"
+                          className="px-4 py-2 bg-indigo-500 text-white rounded-lg text-sm"
                         >
                           추가
                         </button>
@@ -571,7 +1145,7 @@ const TeacherPage2StudentList: React.FC = () => {
                       {activity.keywords && activity.keywords.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {activity.keywords.map((kw, i) => (
-                            <span key={i} className="px-3 py-1 bg-purple-500 text-white rounded-full text-sm flex items-center gap-2">
+                            <span key={i} className="px-3 py-1 bg-indigo-500 text-white rounded-full text-sm flex items-center gap-2">
                               {kw}
                               <button onClick={() => removeKeywordFromActivity(activity.id, kw)} className="font-bold">×</button>
                             </span>
@@ -585,13 +1159,13 @@ const TeacherPage2StudentList: React.FC = () => {
 
               <button
                 onClick={addActivity}
-                className="w-full py-4 border-2 border-dashed border-purple-300 text-purple-700 rounded-2xl hover:bg-purple-50 font-bold text-lg transition-all"
+                className="w-full py-4 border-2 border-dashed border-indigo-300 text-indigo-700 rounded-2xl hover:bg-indigo-50 font-bold text-lg transition-all"
               >
                 + 활동 추가
               </button>
 
               {/* 전체 강조사항 */}
-              <div className="p-6 bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-2xl">
+              <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">전체 강조사항</h3>
                 <div className="space-y-4">
                   <div>
@@ -601,7 +1175,7 @@ const TeacherPage2StudentList: React.FC = () => {
                       onChange={(e) => setOverallEmphasis(e.target.value)}
                       placeholder="전체적으로 강조하고 싶은 점"
                       rows={2}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
                     />
                   </div>
                   <div>
@@ -611,7 +1185,7 @@ const TeacherPage2StudentList: React.FC = () => {
                         type="text"
                         value={overallKeywordInput}
                         onChange={(e) => setOverallKeywordInput(e.target.value)}
-                        onKeyPress={(e) => {
+                        onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             addOverallKeyword(overallKeywordInput);
                             setOverallKeywordInput('');
@@ -658,7 +1232,7 @@ const TeacherPage2StudentList: React.FC = () => {
                 </button>
                 <button
                   onClick={handleSaveActivity}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 font-bold shadow-lg transition-all"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 font-bold shadow-lg transition-all"
                 >
                   저장
                 </button>
@@ -666,6 +1240,67 @@ const TeacherPage2StudentList: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 일괄 추가 모달 */}
+      {showBulkImportModal && (
+        <BulkStudentImport
+          onImport={handleBulkImport}
+          onClose={() => setShowBulkImportModal(false)}
+        />
+      )}
+
+      {/* 템플릿 선택 모달 */}
+      {showTemplateModal && state.basicInfo && (
+        <ActivityTemplates
+          sectionType={state.basicInfo.sectionType}
+          onSelectTemplate={handleApplyTemplate}
+          onClose={() => setShowTemplateModal(false)}
+        />
+      )}
+
+      {/* 일괄 파일 관리 모달 */}
+      {showBulkFileManager && (
+        <BulkActivityFileManager
+          students={state.students}
+          sectionType={state.basicInfo?.sectionType || 'subject'}
+          subject={state.basicInfo?.subject}
+          onAnalysisComplete={(mappings: BulkFileMapping[]) => {
+            mappings.forEach(mapping => {
+              const results = mapping.analysisResults || [];
+              if (results.length > 0 && mapping.studentId) {
+                const student = state.students.find(s => s.id === mapping.studentId);
+                const firstResult = results[0];
+                if (student && firstResult.writingOptions.length > 0) {
+                  const draft = firstResult.writingOptions[0].draft;
+
+                  const activityDetails: ActivityDetails = {
+                    activities: [{
+                      id: Date.now().toString(),
+                      period: '',
+                      role: '',
+                      content: draft,
+                      learnings: '',
+                      keywords: firstResult.subjectRelevance[0]?.connectionPoints || [],
+                    }],
+                    overallEmphasis: firstResult.summary,
+                    overallKeywords: firstResult.demonstratedCompetencies.map(c => c.competency).slice(0, 3),
+                    maxCharacters: 500 as const,
+                  };
+
+                  setStudentActivity({
+                    studentId: mapping.studentId,
+                    studentName: student.name,
+                    activityDetails,
+                    emphasisKeywords: activityDetails.overallKeywords,
+                  });
+                }
+              }
+            });
+            setShowBulkFileManager(false);
+          }}
+          onClose={() => setShowBulkFileManager(false)}
+        />
       )}
 
       <CommonFooter />

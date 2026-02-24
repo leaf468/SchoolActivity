@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { SchoolActivityProvider } from "./contexts/SchoolActivityContext";
 import { TeacherProvider } from "./contexts/TeacherContext";
@@ -27,6 +27,7 @@ import TeacherPage3BatchReview from './pages/TeacherPage3BatchReview';
 
 // New Teacher Pages
 import TeacherComparisonDashboard from './pages/TeacherComparisonDashboard';
+import TeacherDashboard from './pages/TeacherDashboard';
 
 // GA 페이지뷰 추적 컴포넌트
 function PageViewTracker() {
@@ -94,6 +95,7 @@ function AppContent() {
         <Route path="/teacher/review" element={<TeacherPage3BatchReview />} />
 
         {/* New Teacher Features */}
+        <Route path="/teacher" element={<TeacherDashboard />} />
         <Route path="/teacher/comparison" element={<TeacherComparisonDashboard />} />
       </Routes>
     </>

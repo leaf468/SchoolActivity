@@ -107,11 +107,11 @@ const Page1BasicInfo: React.FC = () => {
       <div className="py-12 px-4">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-10">
-            <h1 className="text-4xl font-bold text-gray-800 mb-3">생활기록부 AI 작성</h1>
-            <p className="text-gray-600">학년, 학기 및 작성할 항목을 선택하세요</p>
+            <h1 className="text-4xl font-bold text-gray-900 mb-3">생활기록부 AI 작성</h1>
+            <p className="text-lg text-gray-600">학년, 학기 및 작성할 항목을 선택하세요</p>
           </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-8">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* 학년/학기 선택 */}
           <div className="mb-8">
             <label className="block text-sm font-semibold text-gray-700 mb-3">
@@ -123,7 +123,7 @@ const Page1BasicInfo: React.FC = () => {
                 <select
                   value={grade}
                   onChange={(e) => setGrade(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all bg-white"
                 >
                   <option value="1">1학년</option>
                   <option value="2">2학년</option>
@@ -135,7 +135,7 @@ const Page1BasicInfo: React.FC = () => {
                 <select
                   value={semester}
                   onChange={(e) => setSemester(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all bg-white"
                 >
                   <option value="1">1학기</option>
                   <option value="2">2학기</option>
@@ -255,7 +255,7 @@ const Page1BasicInfo: React.FC = () => {
                     value={customSubject}
                     onChange={(e) => setCustomSubject(e.target.value)}
                     placeholder="과목명을 직접 입력하세요"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all"
                     autoFocus
                   />
                 )}
@@ -279,7 +279,7 @@ const Page1BasicInfo: React.FC = () => {
           <div className="flex justify-end">
             <button
               onClick={handleNext}
-              className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-md"
+              className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02]"
             >
               다음 단계 →
             </button>
