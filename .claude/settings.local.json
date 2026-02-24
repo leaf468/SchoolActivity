@@ -12,7 +12,16 @@
       "Bash(export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\")",
       "Bash(PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npx tsc:*)",
       "Bash(PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" ./node_modules/.bin/tsc:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(cat:*)",
+      "Bash(git push:*)",
+      "Bash(for branch in origin/feature/backend origin/features origin/landing origin/login origin/new-features origin/ui/design)",
+      "Bash(do echo \"=== $branch ===\")",
+      "Bash(done)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nFix: update Vercel config and ensure proper deployment\n\n- Add GitHub silent mode to Vercel config\n- Ensure build uses latest commit with all type exports\n- Previous deployments stuck on stale commit ef90703\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git show-ref:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nBump version to 0.1.1 - force Vercel rebuild\n\nIncrementing version to trigger fresh Vercel deployment.\nAll type exports (BasicInfo, ActivityDetails, DraftResult) are properly defined in current codebase.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

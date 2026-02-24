@@ -13,15 +13,29 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl =
   process.env.REACT_APP_PUBLIC_SUPABASE_URL ||
   process.env.REACT_APP_SUPABASE_URL ||
-  process.env.NEXT_PUBLIC_SUPABASE_URL;
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  '';
 
 const supabaseAnonKey =
   process.env.REACT_APP_PUBLIC_SUPABASE_ANON_KEY ||
   process.env.REACT_APP_SUPABASE_ANON_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  '';
+
+// 환경변수 검증
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Supabase configuration missing!');
+  console.error('Required environment variables:');
+  console.error('- REACT_APP_SUPABASE_URL');
+  console.error('- REACT_APP_SUPABASE_ANON_KEY');
+  console.error('\nPlease add these in Vercel Dashboard → Settings → Environment Variables');
+}
 
 // Supabase 클라이언트 생성
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key',
+  {
   auth: {
     // 인증 설정
     autoRefreshToken: true,
