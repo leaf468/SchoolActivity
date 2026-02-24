@@ -36,13 +36,19 @@ export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder-key',
   {
-  auth: {
-    // 인증 설정
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-  },
-});
+    auth: {
+      // 인증 설정
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'school-activity-app',
+      },
+    },
+  }
+);
 
 // 타입 추론을 위한 Database 타입 export
 export type SupabaseClient = typeof supabase;

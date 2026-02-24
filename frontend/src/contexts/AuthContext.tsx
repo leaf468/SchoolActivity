@@ -42,8 +42,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let subscription: any = null;
 
     const initializeAuth = async () => {
-      // 1. Supabase 세션을 먼저 확인 (최우선)
-      const { data: { session } } = await supabase.auth.getSession();
+      try {
+        // 1. Supabase 세션을 먼저 확인 (최우선)
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        // 401 에러는 로그인하지 않은 정상 상태이므로 무시
+        if (error && error.message !== 'Auth session missing!' && !error.message.includes('401')) {
+          console.error('Auth session check failed:', error);
+        }
 
       if (session?.user) {
         // Supabase 세션이 있으면 localStorage를 clear하고 세션 사용
@@ -89,6 +95,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // 어떤 세션도 없으면 로딩 종료
         setAuthState(prev => ({ ...prev, loading: false }));
+      }
+      } catch (error) {
+        // 인증 초기화 실패 시 게스트 모드로 처리
+        console.warn('Auth initialization failed, continuing as guest:', error);
+        setAuthState({
+          user: null,
+          isAuthenticated: false,
+          isGuest: false,
+          loading: false,
+        });
       }
     };
 
