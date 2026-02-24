@@ -3,5 +3,8 @@
   "buildCommand": "cd frontend && npm install && CI=false npm run build",
   "outputDirectory": "frontend/build",
   "installCommand": "cd frontend && npm install",
-  "devCommand": "cd frontend && npm run start"
+  "devCommand": "cd frontend && npm run start",
+  "github": {
+    "silent": true
+  }
 }
