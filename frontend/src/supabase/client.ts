@@ -28,7 +28,22 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Required environment variables:');
   console.error('- REACT_APP_SUPABASE_URL');
   console.error('- REACT_APP_SUPABASE_ANON_KEY');
-  console.error('\nPlease add these in Vercel Dashboard → Settings → Environment Variables');
+  console.error('\nPlease add these in:');
+  console.error('- Local: frontend/.env file');
+  console.error('- Production: Vercel Dashboard → Settings → Environment Variables');
+  console.error('\n📖 See SUPABASE_FIX_CREDENTIALS.md for setup instructions');
+}
+
+// API 키 유효성 간단 체크
+if (supabaseAnonKey && supabaseAnonKey !== 'placeholder-key') {
+  if (!supabaseAnonKey.startsWith('eyJ')) {
+    console.warn('⚠️  Supabase anon key format looks incorrect. It should start with "eyJ"');
+    console.warn('📖 See SUPABASE_FIX_CREDENTIALS.md to get the correct API key');
+  }
+  if (supabaseAnonKey.length < 100) {
+    console.warn('⚠️  Supabase anon key seems too short. Make sure you copied the full key.');
+    console.warn('📖 See SUPABASE_FIX_CREDENTIALS.md for help');
+  }
 }
 
 // Supabase 클라이언트 생성

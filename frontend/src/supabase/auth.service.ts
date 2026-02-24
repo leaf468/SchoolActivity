@@ -44,6 +44,14 @@ export async function signUp(
     if (error) {
       console.error('Supabase 회원가입 에러:', error);
 
+      // Invalid API key 에러
+      if (error.message.includes('Invalid API key') || error.message.includes('invalid_api_key')) {
+        return {
+          success: false,
+          error: '❌ Supabase API 키가 유효하지 않습니다. 관리자에게 문의하거나 SUPABASE_FIX_CREDENTIALS.md를 참고하세요.',
+        };
+      }
+
       // 이미 존재하는 사용자
       if (error.message.includes('already registered') || error.message.includes('User already registered')) {
         return {
