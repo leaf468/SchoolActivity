@@ -51,6 +51,9 @@ const TeacherPage2StudentList: React.FC = () => {
   const [currentEditingStudent, setCurrentEditingStudent] = useState<string | null>(null);
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
 
+  // 간편 모드 / 전문 모드 토글
+  const [isSimpleMode, setIsSimpleMode] = useState(true);
+
   // 활동 입력 폼
   const [activityForm, setActivityForm] = useState<SingleActivity[]>([
     { id: '1', period: '', role: '', content: '', learnings: '', keywords: [] }
@@ -59,6 +62,9 @@ const TeacherPage2StudentList: React.FC = () => {
   const [overallEmphasis, setOverallEmphasis] = useState('');
   const [overallKeywords, setOverallKeywords] = useState<string[]>([]);
   const [overallKeywordInput, setOverallKeywordInput] = useState('');
+
+  // 간편 모드용 통합 입력
+  const [simpleContent, setSimpleContent] = useState('');
 
   // 파일 입력 ref
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
@@ -144,18 +150,23 @@ const TeacherPage2StudentList: React.FC = () => {
     const validStudents = inlineStudents.filter(s => s.name.trim() !== '');
 
     validStudents.forEach(student => {
-      // 이미 존재하는 학생인지 확인
-      const existing = state.students.find(s => s.id === student.id);
+      const classNumber = selectedClassId
+        ? classes.find(c => c.id === selectedClassId)?.classNumber
+        : '';
 
-      if (!existing) {
-        const classNumber = selectedClassId
-          ? classes.find(c => c.id === selectedClassId)?.classNumber
-          : '';
+      const fullClassNumber = classNumber ? `${classNumber} ${student.studentNumber}번` : student.studentNumber ? `${student.studentNumber}번` : undefined;
 
+      // 이름과 반 번호로 중복 체크 (임시 ID가 아닌 실제 데이터로 체크)
+      const isDuplicate = state.students.some(s =>
+        s.name === student.name &&
+        s.classNumber === fullClassNumber
+      );
+
+      if (!isDuplicate) {
         const newStudent: TeacherStudentInfo = {
           id: `student_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
           name: student.name,
-          classNumber: classNumber ? `${classNumber} ${student.studentNumber}번` : student.studentNumber ? `${student.studentNumber}번` : undefined,
+          classNumber: fullClassNumber,
           desiredMajor: student.desiredMajor || undefined,
           track: student.desiredMajor ? student.track : undefined,
         };
@@ -163,6 +174,16 @@ const TeacherPage2StudentList: React.FC = () => {
         addStudent(newStudent);
       }
     });
+
+    // 저장 후 인라인 입력란 초기화
+    setInlineStudents(Array.from({ length: 10 }, (_, i) => ({
+      id: `temp_${Date.now()}_${i}`,
+      name: '',
+      studentNumber: '',
+      desiredMajor: '',
+      track: '상경계열' as MajorTrack,
+      files: [],
+    })));
   };
 
   // 반 추가
@@ -297,13 +318,23 @@ const TeacherPage2StudentList: React.FC = () => {
         setActivityForm(details.activities);
         setOverallEmphasis(details.overallEmphasis || '');
         setOverallKeywords(details.overallKeywords || []);
+
+        // 기존 데이터를 간편 모드로도 표시
+        if (details.activities.length === 1 && details.activities[0].content) {
+          setSimpleContent(details.activities[0].content);
+        } else {
+          setSimpleContent('');
+        }
       }
     } else {
       setActivityForm([{ id: '1', period: '', role: '', content: '', learnings: '', keywords: [] }]);
       setOverallEmphasis('');
       setOverallKeywords([]);
+      setSimpleContent('');
     }
 
+    // 기본값은 간편 모드
+    setIsSimpleMode(true);
     setShowActivityModal(true);
   };
 
@@ -311,14 +342,35 @@ const TeacherPage2StudentList: React.FC = () => {
   const handleSaveActivity = () => {
     if (!currentEditingStudent) return;
 
-    const hasContent = activityForm.some(a => a.content.trim().length > 0);
-    if (!hasContent) {
-      alert('최소 1개 활동의 내용을 입력해주세요.');
-      return;
-    }
-
     const student = state.students.find(s => s.id === currentEditingStudent);
     if (!student) return;
+
+    // 간편 모드인 경우
+    if (isSimpleMode) {
+      if (!simpleContent.trim()) {
+        alert('활동 내용을 입력해주세요.');
+        return;
+      }
+
+      // 간편 모드 내용을 첫 번째 활동으로 변환
+      const singleActivity: SingleActivity = {
+        id: '1',
+        period: '',
+        role: '',
+        content: simpleContent.trim(),
+        learnings: '',
+        keywords: overallKeywords,
+      };
+
+      setActivityForm([singleActivity]);
+    } else {
+      // 전문 모드인 경우 기존 로직
+      const hasContent = activityForm.some(a => a.content.trim().length > 0);
+      if (!hasContent) {
+        alert('최소 1개 활동의 내용을 입력해주세요.');
+        return;
+      }
+    }
 
     let activityDetails: ActivityDetails;
 
@@ -1056,183 +1108,212 @@ const TeacherPage2StudentList: React.FC = () => {
                 </motion.div>
               )}
 
-              {/* 활동 목록 */}
-              {activityForm.map((activity, index) => (
-                <div key={activity.id} className="p-6 bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-2xl">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <span className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-lg flex items-center justify-center text-sm font-bold">
-                        {index + 1}
-                      </span>
-                      <h3 className="text-lg font-bold text-gray-900">활동 {index + 1}</h3>
-                    </div>
-                    {activityForm.length > 1 && (
-                      <button
-                        onClick={() => removeActivity(activity.id)}
-                        className="px-4 py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg font-semibold transition-all"
-                      >
-                        삭제 ×
-                      </button>
-                    )}
-                  </div>
+              {/* 입력 모드 토글 */}
+              <div className="flex items-center justify-center gap-2 p-1 bg-gray-100 rounded-lg w-fit mx-auto">
+                <button
+                  onClick={() => setIsSimpleMode(true)}
+                  className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                    isSimpleMode
+                      ? 'bg-white text-indigo-600 shadow-md'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  간편 입력
+                </button>
+                <button
+                  onClick={() => setIsSimpleMode(false)}
+                  className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                    !isSimpleMode
+                      ? 'bg-white text-indigo-600 shadow-md'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  전문 버젼
+                </button>
+              </div>
 
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        활동 기간 <span className="text-gray-400">(선택)</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={activity.period || ''}
-                        onChange={(e) => updateActivity(activity.id, 'period', e.target.value)}
-                        placeholder="예: 2024.03~06"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        활동 내용 <span className="text-red-500">*</span>
-                      </label>
-                      <textarea
-                        value={activity.content}
-                        onChange={(e) => updateActivity(activity.id, 'content', e.target.value)}
-                        placeholder="구체적 활동 내용"
-                        rows={4}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        깨달은 바 <span className="text-gray-400">(선택)</span>
-                      </label>
-                      <textarea
-                        value={activity.learnings || ''}
-                        onChange={(e) => updateActivity(activity.id, 'learnings', e.target.value)}
-                        placeholder="배운 점, 성장"
-                        rows={2}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">키워드</label>
-                      <div className="flex gap-2 mb-2">
-                        <input
-                          type="text"
-                          value={activityKeywordInput}
-                          onChange={(e) => setActivityKeywordInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              addKeywordToActivity(activity.id, activityKeywordInput);
-                              setActivityKeywordInput('');
-                            }
-                          }}
-                          placeholder="키워드 입력 (Enter)"
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                        />
-                        <button
-                          onClick={() => {
-                            addKeywordToActivity(activity.id, activityKeywordInput);
-                            setActivityKeywordInput('');
-                          }}
-                          className="px-4 py-2 bg-indigo-500 text-white rounded-lg text-sm"
-                        >
-                          추가
-                        </button>
-                      </div>
-                      {activity.keywords && activity.keywords.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {activity.keywords.map((kw, i) => (
-                            <span key={i} className="px-3 py-1 bg-indigo-500 text-white rounded-full text-sm flex items-center gap-2">
-                              {kw}
-                              <button onClick={() => removeKeywordFromActivity(activity.id, kw)} className="font-bold">×</button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+              {/* 간편 입력 모드 */}
+              {isSimpleMode ? (
+                <div className="p-6 bg-white border-2 border-gray-200 rounded-xl">
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    활동 내용 입력 <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={simpleContent}
+                    onChange={(e) => setSimpleContent(e.target.value)}
+                    placeholder="학생의 활동 내용을 자유롭게 입력해주세요. AI가 교과세특 형식에 맞게 변환해드립니다."
+                    rows={8}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none"
+                  />
                 </div>
-              ))}
+              ) : (
+                <>
+                  {/* 전문 버젼 - 활동 목록 */}
+                  {activityForm.map((activity, index) => (
+                    <div key={activity.id} className="p-6 bg-white border-2 border-gray-200 rounded-xl">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <span className="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center text-sm font-bold">
+                            {index + 1}
+                          </span>
+                          <h3 className="text-lg font-bold text-gray-900">활동 {index + 1}</h3>
+                        </div>
+                        {activityForm.length > 1 && (
+                          <button
+                            onClick={() => removeActivity(activity.id)}
+                            className="px-4 py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg font-semibold transition-all"
+                          >
+                            삭제
+                          </button>
+                        )}
+                      </div>
 
-              <button
-                onClick={addActivity}
-                className="w-full py-4 border-2 border-dashed border-indigo-300 text-indigo-700 rounded-2xl hover:bg-indigo-50 font-bold text-lg transition-all"
-              >
-                + 활동 추가
-              </button>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            활동 기간 <span className="text-gray-400">(선택)</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={activity.period || ''}
+                            onChange={(e) => updateActivity(activity.id, 'period', e.target.value)}
+                            placeholder="예: 2024.03~06"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                          />
+                        </div>
 
-              {/* 전체 강조사항 */}
-              <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">전체 강조사항</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">강조 내용</label>
-                    <textarea
-                      value={overallEmphasis}
-                      onChange={(e) => setOverallEmphasis(e.target.value)}
-                      placeholder="전체적으로 강조하고 싶은 점"
-                      rows={2}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">강조 키워드</label>
-                    <div className="flex gap-2 mb-2">
-                      <input
-                        type="text"
-                        value={overallKeywordInput}
-                        onChange={(e) => setOverallKeywordInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            addOverallKeyword(overallKeywordInput);
-                            setOverallKeywordInput('');
-                          }
-                        }}
-                        placeholder="키워드 입력 (Enter)"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                      />
-                      <button
-                        onClick={() => {
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            활동 내용 <span className="text-red-500">*</span>
+                          </label>
+                          <textarea
+                            value={activity.content}
+                            onChange={(e) => updateActivity(activity.id, 'content', e.target.value)}
+                            placeholder="구체적 활동 내용"
+                            rows={4}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 resize-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            깨달은 바 <span className="text-gray-400">(선택)</span>
+                          </label>
+                          <textarea
+                            value={activity.learnings || ''}
+                            onChange={(e) => updateActivity(activity.id, 'learnings', e.target.value)}
+                            placeholder="배운 점, 성장"
+                            rows={2}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 resize-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">키워드</label>
+                          <div className="flex gap-2 mb-2">
+                            <input
+                              type="text"
+                              value={activityKeywordInput}
+                              onChange={(e) => setActivityKeywordInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  addKeywordToActivity(activity.id, activityKeywordInput);
+                                  setActivityKeywordInput('');
+                                }
+                              }}
+                              placeholder="키워드 입력 (Enter)"
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            />
+                            <button
+                              onClick={() => {
+                                addKeywordToActivity(activity.id, activityKeywordInput);
+                                setActivityKeywordInput('');
+                              }}
+                              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700"
+                            >
+                              추가
+                            </button>
+                          </div>
+                          {activity.keywords && activity.keywords.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {activity.keywords.map((kw, i) => (
+                                <span key={i} className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm flex items-center gap-2">
+                                  {kw}
+                                  <button onClick={() => removeKeywordFromActivity(activity.id, kw)} className="font-bold hover:text-indigo-900">×</button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    onClick={addActivity}
+                    className="w-full py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-xl hover:bg-gray-50 hover:border-indigo-300 hover:text-indigo-600 font-medium transition-all"
+                  >
+                    + 활동 추가
+                  </button>
+                </>
+              )}
+
+              {/* 강조 키워드 (간편 모드에서만 표시) */}
+              {isSimpleMode && (
+                <div className="p-6 bg-white border-2 border-gray-200 rounded-xl">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">강조 키워드 (선택)</label>
+                  <div className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={overallKeywordInput}
+                      onChange={(e) => setOverallKeywordInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
                           addOverallKeyword(overallKeywordInput);
                           setOverallKeywordInput('');
-                        }}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm"
-                      >
-                        추가
-                      </button>
-                    </div>
-                    {overallKeywords.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {overallKeywords.map((kw, i) => (
-                          <span key={i} className="px-3 py-1 bg-blue-500 text-white rounded-full text-sm flex items-center gap-2">
-                            {kw}
-                            <button onClick={() => setOverallKeywords(overallKeywords.filter(k => k !== kw))} className="font-bold">×</button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                        }
+                      }}
+                      placeholder="키워드 입력 후 Enter"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <button
+                      onClick={() => {
+                        addOverallKeyword(overallKeywordInput);
+                        setOverallKeywordInput('');
+                      }}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                    >
+                      추가
+                    </button>
                   </div>
+                  {overallKeywords.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {overallKeywords.map((kw, i) => (
+                        <span key={i} className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm flex items-center gap-2">
+                          {kw}
+                          <button onClick={() => setOverallKeywords(overallKeywords.filter(k => k !== kw))} className="font-bold hover:text-indigo-900">×</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
             </div>
 
-            <div className="sticky bottom-0 bg-white border-t-2 border-gray-200 p-6 shadow-lg">
-              <div className="flex gap-4">
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6">
+              <div className="flex gap-3">
                 <button
                   onClick={() => {
                     setShowActivityModal(false);
                     setCurrentEditingStudent(null);
                   }}
-                  className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-bold transition-all"
+                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-all"
                 >
                   취소
                 </button>
                 <button
                   onClick={handleSaveActivity}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 font-bold shadow-lg transition-all"
+                  className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-all"
                 >
                   저장
                 </button>
