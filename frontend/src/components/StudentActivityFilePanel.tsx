@@ -28,6 +28,7 @@ interface StudentActivityFilePanelProps {
   track?: string;
   onSelectDraft?: (draft: string) => void;
   onAnalysisComplete?: (results: FileAnalysisResult[]) => void;
+  onClose?: () => void;
 }
 
 const StudentActivityFilePanel: React.FC<StudentActivityFilePanelProps> = ({
@@ -39,6 +40,7 @@ const StudentActivityFilePanel: React.FC<StudentActivityFilePanelProps> = ({
   track,
   onSelectDraft,
   onAnalysisComplete,
+  onClose,
 }) => {
   const [files, setFiles] = useState<ActivityFile[]>([]);
   const [textInput, setTextInput] = useState('');
@@ -199,14 +201,25 @@ const StudentActivityFilePanel: React.FC<StudentActivityFilePanelProps> = ({
     <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden">
       {/* Header */}
       <div className="p-5 bg-gradient-to-r from-rose-50 via-pink-50 to-purple-50 border-b-2 border-gray-100">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gradient-to-br from-rose-600 to-pink-600 rounded-xl">
-            <DocumentTextIcon className="w-6 h-6 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-gradient-to-br from-rose-600 to-pink-600 rounded-xl">
+              <DocumentTextIcon className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">활동 자료 분석</h3>
+              <p className="text-sm text-gray-500">{studentName}님의 소논문, 포트폴리오 등 분석</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-900">활동 자료 분석</h3>
-            <p className="text-sm text-gray-500">{studentName}님의 소논문, 포트폴리오 등 분석</p>
-          </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-white rounded-lg transition-all"
+              aria-label="닫기"
+            >
+              <XMarkIcon className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 

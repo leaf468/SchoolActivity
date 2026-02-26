@@ -1104,6 +1104,7 @@ const TeacherPage2StudentList: React.FC = () => {
                     subject={state.basicInfo?.subject}
                     desiredMajor={state.students.find(s => s.id === currentEditingStudent)?.desiredMajor}
                     onSelectDraft={handleApplyFileDraft}
+                    onClose={() => setShowActivityFilePanel(false)}
                   />
                 </motion.div>
               )}
