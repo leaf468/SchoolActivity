@@ -127,14 +127,14 @@ const TeacherPage1BasicInfo: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <CommonHeader />
 
       <div className="flex-1 py-10 px-6">
         <div className="max-w-5xl mx-auto">
           {/* 상단 헤더 */}
           <div className="mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium mb-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium mb-2">
               <span>👨‍🏫</span>
               <span>선생님 모드</span>
             </div>
@@ -165,7 +165,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
                         value={teacherName}
                         onChange={(e) => setTeacherName(e.target.value)}
                         placeholder="홍길동"
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
                       />
                     </div>
                     <div>
@@ -206,7 +206,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
                           onClick={() => setSectionType(option.value)}
                           className={`p-3 rounded-xl text-center transition-all ${
                             sectionType === option.value
-                              ? 'bg-indigo-100 border-2 border-indigo-400 text-indigo-800'
+                              ? 'bg-emerald-50 border-2 border-emerald-400 text-emerald-800'
                               : 'bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100'
                           }`}
                         >
@@ -234,7 +234,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
                             과목명 <span className="text-red-500">*</span>
                           </label>
                           {subject && subject !== 'custom' && (
-                            <span className="text-sm text-indigo-600 font-medium bg-indigo-100 px-2 py-0.5 rounded">
+                            <span className="text-sm text-emerald-600 font-medium bg-emerald-100 px-2 py-0.5 rounded">
                               {subject}
                             </span>
                           )}
@@ -252,8 +252,8 @@ const TeacherPage1BasicInfo: React.FC = () => {
                               }}
                               className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
                                 subject === subj
-                                  ? 'bg-indigo-600 text-white'
-                                  : 'bg-white text-gray-700 border border-gray-300 hover:border-indigo-400'
+                                  ? 'bg-emerald-600 text-white'
+                                  : 'bg-white text-gray-700 border border-gray-300 hover:border-emerald-400'
                               }`}
                             >
                               {subj}
@@ -291,7 +291,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
                             setCustomSubject(e.target.value);
                           }}
                           placeholder="또는 과목명 직접 입력"
-                          className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                         />
                       </motion.div>
                     )}
@@ -312,7 +312,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
                     <button
                       onClick={() => setUseMultiFileMode(false)}
                       className={`px-2 py-1 font-medium rounded transition ${
-                        !useMultiFileMode ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500'
+                        !useMultiFileMode ? 'bg-emerald-100 text-emerald-700' : 'text-gray-500'
                       }`}
                     >
                       단일
@@ -320,7 +320,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
                     <button
                       onClick={() => setUseMultiFileMode(true)}
                       className={`px-2 py-1 font-medium rounded transition ${
-                        useMultiFileMode ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500'
+                        useMultiFileMode ? 'bg-emerald-100 text-emerald-700' : 'text-gray-500'
                       }`}
                     >
                       여러 파일
@@ -359,7 +359,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
               </div>
 
               {/* 요약 카드 */}
-              <div className="mt-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-200 p-5">
+              <div className="mt-6 bg-emerald-50 rounded-xl border border-emerald-200 p-5">
                 <h3 className="font-bold text-gray-800 mb-4">설정 요약</h3>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
@@ -375,7 +375,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
                   {sectionType === 'subject' && subject && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">과목명</span>
-                      <span className="font-medium text-indigo-600">
+                      <span className="font-medium text-emerald-600">
                         {subject === 'custom' ? customSubject : subject}
                       </span>
                     </div>
@@ -395,7 +395,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
           <div className="mt-10 flex justify-end">
             <button
               onClick={handleNext}
-              className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-lg transition transform hover:scale-105"
+              className="px-8 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition"
             >
               다음: 학생 추가 →
             </button>
@@ -403,7 +403,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
 
           {/* 진행 표시 */}
           <div className="mt-6 flex justify-center items-center space-x-3">
-            <div className="w-3 h-3 rounded-full bg-indigo-600"></div>
+            <div className="w-3 h-3 rounded-full bg-emerald-600"></div>
             <div className="w-3 h-3 rounded-full bg-gray-300"></div>
             <div className="w-3 h-3 rounded-full bg-gray-300"></div>
           </div>
@@ -445,7 +445,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
                     {Object.entries(detailSubjects).map(([category, subjects]) => (
                       <div key={category}>
                         <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                          <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded flex items-center justify-center text-xs">
+                          <span className="w-6 h-6 bg-emerald-100 text-emerald-600 rounded flex items-center justify-center text-xs">
                             {category[0]}
                           </span>
                           {category} 영역
@@ -455,7 +455,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
                             <button
                               key={subj}
                               onClick={() => selectSubjectFromModal(subj)}
-                              className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-lg hover:border-indigo-400 hover:bg-indigo-50 transition text-sm font-medium"
+                              className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-lg hover:border-emerald-400 hover:bg-emerald-50 transition text-sm font-medium"
                             >
                               {subj}
                             </button>
@@ -471,7 +471,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
                     {Object.entries(inquirySubjects).map(([category, subjects]) => (
                       <div key={category}>
                         <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                          <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded flex items-center justify-center text-xs">
+                          <span className="w-6 h-6 bg-emerald-100 text-emerald-600 rounded flex items-center justify-center text-xs">
                             {category[0]}
                           </span>
                           {category} 탐구
@@ -481,7 +481,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
                             <button
                               key={subj}
                               onClick={() => selectSubjectFromModal(subj)}
-                              className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-lg hover:border-indigo-400 hover:bg-indigo-50 transition text-sm font-medium"
+                              className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-lg hover:border-emerald-400 hover:bg-emerald-50 transition text-sm font-medium"
                             >
                               {subj}
                             </button>
@@ -495,7 +495,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
                 {modalType === 'foreign' && (
                   <div>
                     <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                      <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded flex items-center justify-center text-xs">
+                      <span className="w-6 h-6 bg-emerald-100 text-emerald-600 rounded flex items-center justify-center text-xs">
                         외
                       </span>
                       제2외국어
@@ -505,7 +505,7 @@ const TeacherPage1BasicInfo: React.FC = () => {
                         <button
                           key={subj}
                           onClick={() => selectSubjectFromModal(subj)}
-                          className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-lg hover:border-indigo-400 hover:bg-indigo-50 transition text-sm font-medium"
+                          className="px-4 py-3 bg-white text-gray-700 border border-gray-200 rounded-lg hover:border-emerald-400 hover:bg-emerald-50 transition text-sm font-medium"
                         >
                           {subj}
                         </button>

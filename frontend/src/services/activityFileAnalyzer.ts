@@ -4,6 +4,14 @@
  */
 
 import OpenAI from 'openai';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// PDF.js 워커 설정 (CDN fallback 포함)
+try {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+} catch (error) {
+  console.warn('PDF.js 워커 설정 실패, 기본 설정 사용:', error);
+}
 
 const openai = new OpenAI({
   apiKey: process.env.REACT_APP_OPENAI_API_KEY,
@@ -81,8 +89,48 @@ export interface BulkFileMapping {
 
 class ActivityFileAnalyzer {
   /**
-   * PDF 파일에서 텍스트 추출 (브라우저 환경)
-   * 실제 구현에서는 pdf.js 등 사용 필요
+   * PDF 파일에서 텍스트 추출 (pdf.js 사용)
+   */
+  private async extractTextFromPdf(file: File): Promise<string> {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+
+      // PDF 로딩
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+      let fullText = '';
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        try {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items
+            .map((item: any) => item.str)
+            .join(' ');
+          fullText += pageText + '\n\n';
+        } catch (pageError) {
+          console.warn(`PDF 페이지 ${i} 추출 실패:`, pageError);
+          fullText += `[페이지 ${i} 추출 실패]\n\n`;
+        }
+      }
+
+      return fullText.trim() || `[PDF 파일: ${file.name}]\n텍스트를 추출할 수 없습니다. 이미지 기반 PDF일 수 있습니다.`;
+    } catch (error: any) {
+      console.error('PDF 텍스트 추출 오류:', error);
+
+      // 에러 유형별 메시지
+      const errorMessage = error?.message?.includes('Worker')
+        ? 'PDF 워커 로딩 실패. 네트워크 연결을 확인하세요.'
+        : error?.message?.includes('password')
+        ? 'PDF가 암호로 보호되어 있습니다.'
+        : 'PDF 텍스트 추출 중 오류가 발생했습니다.';
+
+      return `[PDF 파일: ${file.name}]\n${errorMessage}\n텍스트를 직접 입력해주세요.`;
+    }
+  }
+
+  /**
+   * 파일에서 텍스트 추출 (브라우저 환경)
    */
   async extractTextFromFile(file: File): Promise<string> {
     // 텍스트 파일인 경우
@@ -90,16 +138,18 @@ class ActivityFileAnalyzer {
       return await file.text();
     }
 
-    // PDF의 경우 - 실제로는 pdf.js 라이브러리 사용 필요
-    // 여기서는 사용자가 텍스트를 직접 붙여넣기하는 방식을 권장
+    // PDF의 경우 - pdf.js로 텍스트 추출
     if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-      // PDF 텍스트 추출은 별도 처리 필요
-      // 임시로 파일명 정보만 반환
-      return `[PDF 파일: ${file.name}]\n\n파일 내용을 직접 텍스트로 입력해주세요.`;
+      return await this.extractTextFromPdf(file);
+    }
+
+    // HWP의 경우 (한글 문서) - 직접 지원 어려움
+    if (file.name.endsWith('.hwp') || file.name.endsWith('.hwpx')) {
+      return `[한글 문서: ${file.name}]\n\nHWP 파일은 직접 텍스트 추출이 어렵습니다.\n한글에서 텍스트를 복사하여 붙여넣기 해주세요.`;
     }
 
     // DOCX 등 다른 형식
-    return `[${file.name}]\n\n파일 내용을 직접 텍스트로 입력해주세요.`;
+    return `[${file.name}]\n\n이 파일 형식은 직접 텍스트 추출이 어렵습니다.\n내용을 복사하여 붙여넣기 해주세요.`;
   }
 
   /**

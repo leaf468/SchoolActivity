@@ -4,7 +4,7 @@
  */
 
 import { supabase } from '../config/supabase';
-import { AdmissionRecord, MajorTrack, SectionType } from '../types/schoolActivity';
+import { AdmissionRecord, MajorTrack, ExtendedAdmissionRecord } from '../types/schoolActivity';
 
 export class AdmissionDataService {
   private static readonly TABLE_NAME = 'admission_records';
@@ -247,6 +247,119 @@ export class AdmissionDataService {
     } catch (error) {
       console.error('Error fetching track stats:', error);
       return [];
+    }
+  }
+
+  /**
+   * localStorage의 ExtendedAdmissionRecord를 AdmissionRecord로 변환
+   */
+  static convertExtendedToAdmissionRecord(
+    extended: ExtendedAdmissionRecord
+  ): Omit<AdmissionRecord, 'id' | 'createdAt'> {
+    return {
+      university: extended.university,
+      major: extended.major,
+      track: extended.track,
+      admissionYear: extended.admissionYear,
+      admissionType: extended.admissionType,
+      grade1Records: [],
+      grade2Records: [],
+      grade3Records: [],
+      tags: [],
+    };
+  }
+
+  /**
+   * localStorage 데이터를 Supabase로 일괄 저장
+   */
+  static async importFromLocalStorage(): Promise<{
+    success: boolean;
+    imported: number;
+    failed: number;
+    error?: string;
+  }> {
+    try {
+      const saved = localStorage.getItem('teacher_admission_records');
+      if (!saved) {
+        return { success: true, imported: 0, failed: 0 };
+      }
+
+      const extendedRecords: ExtendedAdmissionRecord[] = JSON.parse(saved);
+      if (extendedRecords.length === 0) {
+        return { success: true, imported: 0, failed: 0 };
+      }
+
+      const records = extendedRecords.map(record => this.convertExtendedToAdmissionRecord(record));
+
+      const { error } = await supabase
+        .from(this.TABLE_NAME)
+        .insert(records);
+
+      if (error) {
+        return { success: false, imported: 0, failed: extendedRecords.length, error: error.message };
+      }
+
+      return { success: true, imported: extendedRecords.length, failed: 0 };
+    } catch (error: any) {
+      console.error('Error importing from localStorage:', error);
+      return { success: false, imported: 0, failed: 0, error: error.message };
+    }
+  }
+
+  /**
+   * ExtendedAdmissionRecord 배열을 직접 Supabase로 저장
+   */
+  static async bulkImportExtended(
+    records: ExtendedAdmissionRecord[]
+  ): Promise<{ success: boolean; imported: number; error?: string }> {
+    try {
+      if (records.length === 0) {
+        return { success: true, imported: 0 };
+      }
+
+      const admissionRecords = records.map(record => ({
+        university: record.university,
+        major: record.major,
+        track: record.track,
+        admission_year: record.admissionYear,
+        admission_type: record.admissionType,
+        grade_record: record.gradeRecord,
+        mock_exams: record.mockExams,
+        high_school: record.highSchool,
+        admission_result: record.admissionResult,
+        tags: [],
+        created_at: new Date().toISOString(),
+      }));
+
+      const { error } = await supabase
+        .from(this.TABLE_NAME)
+        .insert(admissionRecords);
+
+      if (error) {
+        return { success: false, imported: 0, error: error.message };
+      }
+
+      return { success: true, imported: records.length };
+    } catch (error: any) {
+      console.error('Error bulk importing extended records:', error);
+      return { success: false, imported: 0, error: error.message };
+    }
+  }
+
+  /**
+   * 합격자 데이터 전체 개수 조회
+   */
+  static async getAdmissionCount(): Promise<number> {
+    try {
+      const { count, error } = await supabase
+        .from(this.TABLE_NAME)
+        .select('*', { count: 'exact', head: true });
+
+      if (error) throw error;
+      return count || 0;
+    } catch (error) {
+      console.error('Error getting admission count:', error);
+      return 0;
     }
   }
 }

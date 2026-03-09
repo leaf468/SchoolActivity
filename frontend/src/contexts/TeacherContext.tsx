@@ -92,71 +92,88 @@ export const TeacherProvider: React.FC<TeacherProviderProps> = ({ children }) =>
       if (!isAuthenticated || isGuest || !user) return;
 
       const savedSessionId = state.sessionId;
+      // 새로 생성된 세션 ID(session_으로 시작)는 DB에서 복원하지 않음
       if (!savedSessionId || savedSessionId.startsWith('session_')) {
-        // Check if it's a real session ID (not a newly generated one)
+        return;
+      }
+
+      // 이미 학생 데이터가 있으면 중복 복원 방지
+      if (state.students.length > 0) {
+        console.log('[TeacherContext] 이미 데이터가 있어 DB 복원 건너뜀');
+        return;
+      }
+
+      try {
         const sessionResult = await getTeacherSessionBySessionId(savedSessionId);
-        if (sessionResult.success && sessionResult.data) {
-          console.log('[TeacherContext] Restoring session from DB:', savedSessionId);
-
-          // Load students for this session
-          const studentsResult = await getTeacherStudentsBySession(savedSessionId);
-          if (studentsResult.success && studentsResult.data) {
-            // Convert DB students to TeacherStudentInfo format
-            const students: TeacherStudentInfo[] = studentsResult.data.map((s: any) => ({
-              id: s.student_id,
-              name: s.student_name,
-              classNumber: s.class_number || '',
-              desiredMajor: s.desired_major || '',
-              track: s.track || '',
-            }));
-
-            // Load student activities from activity_details JSONB field
-            const studentActivities: TeacherStudentActivity[] = studentsResult.data
-              .filter((s: any) => s.activity_details)
-              .map((s: any) => ({
-                studentId: s.student_id,
-                studentName: s.student_name,
-                activityDetails: s.activity_details,
-                emphasisKeywords: s.emphasis_keywords || [],
-              }));
-
-            // Load generated records from generated_draft field
-            const generatedRecords: TeacherGeneratedRecord[] = studentsResult.data
-              .filter((s: any) => s.generated_draft)
-              .map((s: any) => ({
-                studentId: s.student_id,
-                studentName: s.student_name,
-                generatedRecord: {
-                  id: `gen_${s.student_id}`,
-                  studentInfo: {} as any, // Will be populated when needed
-                  activityInput: {} as any, // Will be populated when needed
-                  generatedText: s.generated_draft,
-                  confidence: s.draft_confidence || 0.8,
-                  usedFewShots: [],
-                  createdAt: s.created_at || new Date().toISOString(),
-                  updatedAt: s.updated_at,
-                },
-              }));
-
-            // Restore state with loaded data
-            setState(prev => ({
-              ...prev,
-              students: students,
-              studentActivities: studentActivities,
-              generatedRecords: generatedRecords,
-            }));
-
-            console.log('[TeacherContext] Loaded from DB:', {
-              students: students.length,
-              activities: studentActivities.length,
-              records: generatedRecords.length,
-            });
-          }
+        if (!sessionResult.success || !sessionResult.data) {
+          return;
         }
+
+        console.log('[TeacherContext] Restoring session from DB:', savedSessionId);
+
+        // Load students for this session
+        const studentsResult = await getTeacherStudentsBySession(savedSessionId);
+        if (!studentsResult.success || !studentsResult.data) {
+          return;
+        }
+
+        // Convert DB students to TeacherStudentInfo format
+        const students: TeacherStudentInfo[] = studentsResult.data.map((s: any) => ({
+          id: s.student_id,
+          name: s.student_name,
+          classNumber: s.class_number || '',
+          desiredMajor: s.desired_major || '',
+          track: s.track || '',
+        }));
+
+        // Load student activities from activity_details JSONB field
+        const studentActivities: TeacherStudentActivity[] = studentsResult.data
+          .filter((s: any) => s.activity_details)
+          .map((s: any) => ({
+            studentId: s.student_id,
+            studentName: s.student_name,
+            activityDetails: s.activity_details,
+            emphasisKeywords: s.emphasis_keywords || [],
+          }));
+
+        // Load generated records from generated_draft field
+        const generatedRecords: TeacherGeneratedRecord[] = studentsResult.data
+          .filter((s: any) => s.generated_draft)
+          .map((s: any) => ({
+            studentId: s.student_id,
+            studentName: s.student_name,
+            generatedRecord: {
+              id: `gen_${s.student_id}`,
+              studentInfo: {} as any, // Will be populated when needed
+              activityInput: {} as any, // Will be populated when needed
+              generatedText: s.generated_draft,
+              confidence: s.draft_confidence || 0.8,
+              usedFewShots: [],
+              createdAt: s.created_at || new Date().toISOString(),
+              updatedAt: s.updated_at,
+            },
+          }));
+
+        // Restore state with loaded data
+        setState(prev => ({
+          ...prev,
+          students: students,
+          studentActivities: studentActivities,
+          generatedRecords: generatedRecords,
+        }));
+
+        console.log('[TeacherContext] Loaded from DB:', {
+          students: students.length,
+          activities: studentActivities.length,
+          records: generatedRecords.length,
+        });
+      } catch (error) {
+        console.error('[TeacherContext] DB 복원 실패:', error);
       }
     };
 
     restoreFromDB();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, isGuest, user]); // Only run once on mount when auth changes
 
   // 기본 정보가 변경될 때 Supabase에 자동 저장

@@ -409,6 +409,170 @@ export interface ComparisonResult {
   createdAt: string;
 }
 
+// ========================================
+// 합격자 성적 데이터 (엑셀 업로드용)
+// ========================================
+
+/**
+ * 내신 성적 정보
+ */
+export interface GradeRecord {
+  overall: number;              // 전체 내신 평균 등급 (1.0 ~ 9.0)
+  grade1?: number;              // 1학년 평균 등급
+  grade2?: number;              // 2학년 평균 등급
+  grade3?: number;              // 3학년 1학기 등급
+  korean?: number;              // 국어 평균 등급
+  math?: number;                // 수학 평균 등급
+  english?: number;             // 영어 평균 등급
+  science?: number;             // 과학탐구 평균 등급
+  social?: number;              // 사회탐구 평균 등급
+  history?: number;             // 한국사 등급
+}
+
+/**
+ * 모의고사/수능 성적 정보
+ */
+export interface MockExamRecord {
+  type: 'mock' | 'sat';           // 모의고사 또는 수능
+  examName?: string;              // 시험명 (예: "6월 모의", "9월 모의", "수능")
+  date?: string;                  // 시험 날짜 (예: "2024-06", "2024-11")
+  korean?: {
+    raw?: number;                 // 원점수
+    standard?: number;            // 표준점수
+    percentile?: number;          // 백분위
+    grade?: number;               // 등급
+  };
+  math?: {
+    raw?: number;
+    standard?: number;
+    percentile?: number;
+    grade?: number;
+    type?: string;                // 수학 유형 (확통, 미적분, 기하)
+  };
+  english?: {
+    raw?: number;
+    grade?: number;               // 영어는 등급만 (절대평가)
+  };
+  history?: {
+    raw?: number;
+    grade?: number;               // 한국사도 등급만 (절대평가)
+  };
+  inquiry1?: {                    // 탐구1
+    subject?: string;             // 과목명
+    raw?: number;
+    standard?: number;
+    percentile?: number;
+    grade?: number;
+  };
+  inquiry2?: {                    // 탐구2
+    subject?: string;
+    raw?: number;
+    standard?: number;
+    percentile?: number;
+    grade?: number;
+  };
+  totalStandard?: number;         // 합산 표준점수 (국+수+탐)
+  averagePercentile?: number;     // 평균 백분위
+}
+
+/**
+ * 전형 정보
+ */
+export interface AdmissionTypeInfo {
+  method: 'early' | 'regular';    // 수시 / 정시
+  typeName: string;               // 전형명 (학생부종합, 학생부교과, 논술, 정시 등)
+  subType?: string;               // 세부 전형 (서울대 일반, 지역균형 등)
+  hasMinimumRequirement?: boolean; // 수능 최저 적용 여부
+  minimumRequirement?: string;     // 수능 최저 내용 (예: "3합 5등급")
+}
+
+/**
+ * 확장된 합격자 데이터 (엑셀 업로드 지원)
+ */
+export interface ExtendedAdmissionRecord extends AdmissionRecord {
+  // 성적 정보
+  gradeRecord?: GradeRecord;      // 내신 성적
+  mockExams?: MockExamRecord[];   // 모의고사/수능 성적들
+
+  // 전형 상세 정보
+  admissionTypeInfo?: AdmissionTypeInfo;
+
+  // 합격 상세
+  admissionResult: 'accepted' | 'additional' | 'rejected' | 'waitlist';  // 합격/추합/불합/예비
+  additionalOrder?: number;       // 추가합격 순번 (추합인 경우)
+  enrolled?: boolean;             // 실제 등록 여부
+
+  // 학교 정보 확장
+  highSchoolType?: 'general' | 'special' | 'autonomous' | 'foreign';  // 일반고/특목고/자사고/외고
+  highSchoolRegion?: string;      // 고등학교 지역
+
+  // 비교군 분석용
+  competitionRate?: number;       // 경쟁률
+  acceptedGradeRange?: {          // 합격자 내신 범위
+    min: number;
+    max: number;
+    average: number;
+  };
+}
+
+/**
+ * 엑셀 파싱 결과
+ */
+export interface ExcelParseResult {
+  success: boolean;
+  data: ExtendedAdmissionRecord[];
+  errors: {
+    row: number;
+    column: string;
+    message: string;
+  }[];
+  warnings: {
+    row: number;
+    message: string;
+  }[];
+  summary: {
+    totalRows: number;
+    successRows: number;
+    failedRows: number;
+    duplicateRows: number;
+  };
+}
+
+/**
+ * 합격자 비교 필터
+ */
+export interface AdmissionComparisonFilter {
+  universities?: string[];        // 대학 필터
+  majors?: string[];              // 학과 필터
+  tracks?: MajorTrack[];          // 계열 필터
+  years?: number[];               // 연도 필터
+  admissionTypes?: string[];      // 전형 필터
+  gradeRange?: {                  // 내신 범위 필터
+    min: number;
+    max: number;
+  };
+  highSchoolTypes?: ('general' | 'special' | 'autonomous' | 'foreign')[];
+}
+
+/**
+ * 합격자 통계 요약
+ */
+export interface AdmissionStatistics {
+  totalCount: number;
+  byUniversity: { name: string; count: number; avgGrade: number }[];
+  byTrack: { track: MajorTrack; count: number; avgGrade: number }[];
+  byAdmissionType: { type: string; count: number; avgGrade: number }[];
+  byYear: { year: number; count: number }[];
+  gradeDistribution: {
+    range: string;                // 예: "1.0-1.5", "1.5-2.0"
+    count: number;
+  }[];
+  mockExamDistribution?: {
+    percentileRange: string;      // 예: "95-100", "90-95"
+    count: number;
+  }[];
+}
+
 /**
  * 다음 학기 활동 추천
  */

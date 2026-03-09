@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTeacher } from '../contexts/TeacherContext';
@@ -107,7 +107,8 @@ const TeacherMyPage: React.FC = () => {
         const profile = result.data;
         setSchool(profile.school || '');
         setGrade(profile.grade || '');
-        setSubject(profile.semester || '');
+        // teacher_subject 필드 사용, 없으면 semester fallback (마이그레이션 전 호환)
+        setSubject((profile as any).teacher_subject || profile.semester || '');
       } else {
         console.error('프로필 조회 실패:', result.error);
       }
@@ -133,8 +134,8 @@ const TeacherMyPage: React.FC = () => {
       const result = await updateMyProfile({
         school,
         grade,
-        semester: subject,
-      });
+        teacher_subject: subject, // 교사 담당 과목은 teacher_subject 필드 사용
+      } as any);
 
       if (result.success) {
         setIsEditing(false);
@@ -249,19 +250,6 @@ const TeacherMyPage: React.FC = () => {
     }
   };
 
-  const toggleSessionSelection = (sessionId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedSessions(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(sessionId)) {
-        newSet.delete(sessionId);
-      } else {
-        newSet.add(sessionId);
-      }
-      return newSet;
-    });
-  };
-
   const selectAllSessions = () => {
     if (selectedSessions.size === filteredSessions.length) {
       setSelectedSessions(new Set());
@@ -288,7 +276,7 @@ const TeacherMyPage: React.FC = () => {
       if (todosForDate.length > 0) {
         return (
           <div className="flex justify-center mt-1">
-            <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full"></div>
+            <div className="w-1.5 h-1.5 bg-emerald-600 rounded-full"></div>
           </div>
         );
       }
@@ -362,13 +350,13 @@ const TeacherMyPage: React.FC = () => {
   if (!isAuthenticated || isGuest) {
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-xl shadow-lg max-w-md w-full p-8 text-center border border-gray-200"
           >
-            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">🔐</span>
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">로그인이 필요합니다</h2>
@@ -378,7 +366,7 @@ const TeacherMyPage: React.FC = () => {
             <div className="space-y-3">
               <button
                 onClick={() => setShowLoginModal(true)}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-semibold transition"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-semibold transition"
               >
                 로그인하기
               </button>
@@ -417,8 +405,8 @@ const TeacherMyPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center">
-        <div className="animate-spin w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin w-10 h-10 border-4 border-emerald-200 border-t-emerald-600 rounded-full"></div>
       </div>
     );
   }
@@ -426,7 +414,7 @@ const TeacherMyPage: React.FC = () => {
   const todosForSelectedDate = getTodosForDate(selectedDate);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <CommonHeader />
 
       <div className="flex-1 py-10 px-6">
@@ -435,7 +423,7 @@ const TeacherMyPage: React.FC = () => {
           <div className="mb-8">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium mb-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium mb-2">
                   <span>👨‍🏫</span>
                   <span>선생님 모드</span>
                 </div>
@@ -444,7 +432,7 @@ const TeacherMyPage: React.FC = () => {
               </div>
               <button
                 onClick={() => navigate('/teacher/basic')}
-                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-lg transition flex items-center gap-2"
+                className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition flex items-center gap-2"
               >
                 <span>+</span>
                 새 생기부 작성
@@ -459,7 +447,7 @@ const TeacherMyPage: React.FC = () => {
               <p className="text-xs text-gray-600">전체 세션</p>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
-              <p className="text-2xl font-bold text-indigo-600">{stats.totalStudents}</p>
+              <p className="text-2xl font-bold text-emerald-600">{stats.totalStudents}</p>
               <p className="text-xs text-gray-600">전체 학생</p>
             </div>
             <div className="bg-white rounded-xl border border-blue-200 p-4 text-center shadow-sm">
@@ -521,7 +509,7 @@ const TeacherMyPage: React.FC = () => {
                           onClick={() => setSessionFilter(filter.key as any)}
                           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
                             sessionFilter === filter.key
-                              ? 'bg-indigo-600 text-white'
+                              ? 'bg-emerald-600 text-white'
                               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}
                         >
@@ -534,7 +522,7 @@ const TeacherMyPage: React.FC = () => {
                       value={sessionSearch}
                       onChange={(e) => setSessionSearch(e.target.value)}
                       placeholder="검색..."
-                      className="flex-1 min-w-[150px] px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="flex-1 min-w-[150px] px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                     />
                   </div>
                 </div>
@@ -546,7 +534,7 @@ const TeacherMyPage: React.FC = () => {
                       <p className="text-gray-500 mb-4">아직 작성된 세션이 없습니다</p>
                       <button
                         onClick={() => navigate('/teacher/basic')}
-                        className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition"
+                        className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition"
                       >
                         생기부 작성하기
                       </button>
@@ -572,8 +560,8 @@ const TeacherMyPage: React.FC = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className={`relative border-2 rounded-xl p-5 cursor-pointer transition-all hover:shadow-md ${
                               selectedSessions.has(session.session_id)
-                                ? 'border-indigo-400 bg-indigo-50'
-                                : 'border-gray-200 bg-white hover:border-indigo-200'
+                                ? 'border-emerald-400 bg-emerald-50'
+                                : 'border-gray-200 bg-white hover:border-emerald-200'
                             }`}
                             onClick={() => handleViewSession(session.session_id)}
                           >
@@ -619,7 +607,7 @@ const TeacherMyPage: React.FC = () => {
                                   <span>{session.subject}</span>
                                 </div>
                               )}
-                              <div className="flex items-center gap-2 text-indigo-600 font-medium">
+                              <div className="flex items-center gap-2 text-emerald-600 font-medium">
                                 <span>👨‍🎓</span>
                                 <span>학생 {session.student_count}명</span>
                               </div>
@@ -658,7 +646,7 @@ const TeacherMyPage: React.FC = () => {
                   {!isEditing ? (
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="px-3 py-1.5 text-sm bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition font-medium"
+                      className="px-3 py-1.5 text-sm bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition font-medium"
                     >
                       편집
                     </button>
@@ -666,7 +654,7 @@ const TeacherMyPage: React.FC = () => {
                     <div className="flex gap-2">
                       <button
                         onClick={handleSaveProfile}
-                        className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium"
+                        className="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium"
                       >
                         저장
                       </button>
@@ -692,7 +680,7 @@ const TeacherMyPage: React.FC = () => {
                       onChange={(e) => setSchool(e.target.value)}
                       disabled={!isEditing}
                       placeholder="학교명 입력"
-                      className={`w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      className={`w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
                         !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
                       }`}
                     />
@@ -705,7 +693,7 @@ const TeacherMyPage: React.FC = () => {
                       onChange={(e) => setSubject(e.target.value)}
                       disabled={!isEditing}
                       placeholder="예: 국어, 수학"
-                      className={`w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      className={`w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
                         !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
                       }`}
                     />
@@ -718,7 +706,7 @@ const TeacherMyPage: React.FC = () => {
                       onChange={(e) => setGrade(e.target.value)}
                       disabled={!isEditing}
                       placeholder="예: 1학년, 전체"
-                      className={`w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      className={`w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
                         !isEditing ? 'bg-gray-50 cursor-not-allowed' : ''
                       }`}
                     />
@@ -764,11 +752,32 @@ const TeacherMyPage: React.FC = () => {
                       onChange={(e) => setNewTodo(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addTodo()}
                       placeholder="할 일 입력"
-                      className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                     />
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowDatePicker(!showDatePicker)}
+                        className="px-3 py-2 bg-gray-100 text-gray-600 text-sm rounded-lg hover:bg-gray-200 transition flex items-center gap-1"
+                      >
+                        📅 {selectedDate.getMonth() + 1}/{selectedDate.getDate()}
+                      </button>
+                      {showDatePicker && (
+                        <div className="absolute right-0 top-full mt-2 z-50 bg-white shadow-xl rounded-xl border border-gray-200">
+                          <Calendar
+                            onChange={(date) => {
+                              setSelectedDate(date as Date);
+                              setShowDatePicker(false);
+                            }}
+                            value={selectedDate}
+                            locale="ko-KR"
+                            className="!border-0"
+                          />
+                        </div>
+                      )}
+                    </div>
                     <button
                       onClick={addTodo}
-                      className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition"
+                      className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition"
                     >
                       추가
                     </button>
@@ -823,16 +832,16 @@ const TeacherMyPage: React.FC = () => {
           font-size: 0.8rem;
         }
         .teacher-calendar .react-calendar__tile--active {
-          background: #4f46e5;
+          background: #059669;
           color: white;
           border-radius: 0.5rem;
         }
         .calendar-wrapper .react-calendar__tile--now {
-          background: #eef2ff;
+          background: #d1fae5;
           border-radius: 0.5rem;
         }
         .calendar-wrapper .react-calendar__tile:enabled:hover {
-          background: #e0e7ff;
+          background: #a7f3d0;
           border-radius: 0.5rem;
         }
         .calendar-wrapper .react-calendar__navigation button {

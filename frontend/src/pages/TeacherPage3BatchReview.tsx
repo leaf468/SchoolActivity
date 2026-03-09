@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTeacher } from '../contexts/TeacherContext';
 import { useAuth } from '../contexts/AuthContext';
 import { schoolRecordGenerator } from '../services/schoolRecordGenerator';
@@ -390,7 +390,7 @@ const TeacherPage3BatchReview: React.FC = () => {
     : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <CommonHeader />
 
       <div className="flex-1 py-8 px-4">
@@ -399,7 +399,7 @@ const TeacherPage3BatchReview: React.FC = () => {
           <div className="mb-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium mb-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium mb-2">
                   <span>👨‍🏫</span>
                   <span>선생님 모드</span>
                 </div>
@@ -415,28 +415,28 @@ const TeacherPage3BatchReview: React.FC = () => {
                   <>
                     <button
                       onClick={handleCopyAll}
-                      className="px-4 py-2 bg-white border-2 border-indigo-200 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-50 transition flex items-center gap-2 text-sm"
+                      className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition flex items-center gap-2 text-sm"
                     >
                       <span>📋</span>
                       전체 복사
                     </button>
                     <button
                       onClick={handleExportAll}
-                      className="px-4 py-2 bg-white border-2 border-green-200 text-green-700 font-semibold rounded-lg hover:bg-green-50 transition flex items-center gap-2 text-sm"
+                      className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition flex items-center gap-2 text-sm"
                     >
                       <span>💾</span>
                       TXT
                     </button>
                     <button
                       onClick={handleExportPDF}
-                      className="px-4 py-2 bg-white border-2 border-red-200 text-red-700 font-semibold rounded-lg hover:bg-red-50 transition flex items-center gap-2 text-sm"
+                      className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition flex items-center gap-2 text-sm"
                     >
                       <span>📄</span>
                       PDF
                     </button>
                     <button
                       onClick={() => navigate('/teacher/comparison')}
-                      className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition flex items-center gap-2 text-sm"
+                      className="px-4 py-2 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition flex items-center gap-2 text-sm"
                     >
                       <span>📊</span>
                       합격자 비교
@@ -454,7 +454,7 @@ const TeacherPage3BatchReview: React.FC = () => {
               <p className="text-sm text-gray-600">전체 학생</p>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
-              <p className="text-2xl font-bold text-indigo-600">{stats.generated}</p>
+              <p className="text-2xl font-bold text-emerald-600">{stats.generated}</p>
               <p className="text-sm text-gray-600">생성 완료</p>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
@@ -477,7 +477,7 @@ const TeacherPage3BatchReview: React.FC = () => {
               </p>
               <button
                 onClick={handleGenerateAll}
-                className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-lg font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-lg transition transform hover:scale-105"
+                className="px-8 py-4 bg-emerald-600 text-white text-lg font-bold rounded-lg hover:bg-emerald-700 transition"
               >
                 🚀 전체 생성 시작
               </button>
@@ -488,17 +488,17 @@ const TeacherPage3BatchReview: React.FC = () => {
           {generating && (
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 mb-6">
               <div className="flex items-center justify-center gap-4 mb-4">
-                <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
                 <div>
                   <p className="text-xl font-bold text-gray-900">생성 중...</p>
-                  <p className="text-indigo-600 font-bold">
+                  <p className="text-emerald-600 font-bold">
                     {progress.current} / {progress.total}
                   </p>
                 </div>
               </div>
               <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
+                  className="h-full bg-emerald-500 transition-all"
                   style={{ width: `${(progress.current / progress.total) * 100}%` }}
                 />
               </div>
@@ -530,7 +530,7 @@ const TeacherPage3BatchReview: React.FC = () => {
                       onClick={() => setFilterStatus(filter.key as any)}
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
                         filterStatus === filter.key
-                          ? 'bg-indigo-600 text-white'
+                          ? 'bg-emerald-600 text-white'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
@@ -552,7 +552,7 @@ const TeacherPage3BatchReview: React.FC = () => {
                         animate={{ opacity: 1 }}
                         className={`p-3 rounded-lg cursor-pointer transition ${
                           selectedStudentId === student.id
-                            ? 'bg-indigo-100 border-2 border-indigo-400'
+                            ? 'bg-emerald-50 border-2 border-emerald-400'
                             : isFinalized
                             ? 'bg-green-50 border border-green-200 hover:bg-green-100'
                             : hasGenerated
@@ -563,7 +563,7 @@ const TeacherPage3BatchReview: React.FC = () => {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center text-xs font-bold">
+                            <span className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-xs font-bold">
                               {index + 1}
                             </span>
                             <span className="font-medium text-gray-800">{student.name}</span>
@@ -592,7 +592,7 @@ const TeacherPage3BatchReview: React.FC = () => {
                     <button
                       onClick={handleGenerateAll}
                       disabled={generating}
-                      className="w-full py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="w-full py-2.5 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       <span>🔄</span>
                       {generating ? '생성 중...' : '전체 재생성'}
@@ -619,7 +619,7 @@ const TeacherPage3BatchReview: React.FC = () => {
                           <p className="text-sm text-gray-600">{selectedStudent.classNumber}</p>
                         )}
                         {selectedStudent.desiredMajor && (
-                          <p className="text-sm text-indigo-600">
+                          <p className="text-sm text-emerald-600">
                             🎯 {selectedStudent.desiredMajor} · {selectedStudent.track}
                           </p>
                         )}
@@ -629,7 +629,7 @@ const TeacherPage3BatchReview: React.FC = () => {
                           <button
                             onClick={() => handleGenerateSingle(selectedStudentId)}
                             disabled={generating}
-                            className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+                            className="px-4 py-2 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition disabled:opacity-50"
                           >
                             🚀 생성하기
                           </button>
@@ -637,23 +637,23 @@ const TeacherPage3BatchReview: React.FC = () => {
                           <>
                             <button
                               onClick={() => handleCopySingle(selectedStudentId)}
-                              className="px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition flex items-center gap-1"
                               title="복사"
                             >
-                              📋
+                              📋 복사
                             </button>
                             <button
                               onClick={() => handleGenerateSingle(selectedStudentId)}
                               disabled={generating}
-                              className="px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
+                              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 flex items-center gap-1"
                               title="재생성"
                             >
-                              🔄
+                              🔄 재생성
                             </button>
                             {editingStudentId !== selectedStudentId ? (
                               <button
                                 onClick={() => setEditingStudentId(selectedStudentId)}
-                                className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition"
+                                className="px-4 py-2 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition"
                               >
                                 ✏️ 수정
                               </button>
@@ -694,7 +694,7 @@ const TeacherPage3BatchReview: React.FC = () => {
                               value={editedTexts[selectedStudentId] || selectedRecord.generatedRecord.generatedText}
                               onChange={(e) => handleTextEdit(selectedStudentId, e.target.value)}
                               rows={15}
-                              className="w-full px-4 py-3 border-2 border-indigo-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition resize-none font-mono text-sm bg-indigo-50"
+                              className="w-full px-4 py-3 border-2 border-emerald-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition resize-none font-mono text-sm bg-emerald-50"
                             />
                           ) : (
                             <div className="p-6 bg-gray-50 border border-gray-200 rounded-xl">
@@ -706,7 +706,7 @@ const TeacherPage3BatchReview: React.FC = () => {
 
                           <div className="mt-4 flex items-center justify-between pt-4 border-t border-gray-200">
                             <div className="flex items-center gap-3">
-                              <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold">
+                              <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold">
                                 {(editedTexts[selectedStudentId] || selectedRecord.generatedRecord.generatedText).length}자
                               </span>
                               {selectedRecord.generatedRecord.updatedAt && (
@@ -724,7 +724,7 @@ const TeacherPage3BatchReview: React.FC = () => {
                           <button
                             onClick={() => handleGenerateSingle(selectedStudentId)}
                             disabled={generating}
-                            className="mt-4 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition disabled:opacity-50"
+                            className="mt-4 px-6 py-3 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition disabled:opacity-50"
                           >
                             🚀 지금 생성하기
                           </button>
@@ -746,13 +746,13 @@ const TeacherPage3BatchReview: React.FC = () => {
           <div className="mt-8 flex justify-between items-center">
             <button
               onClick={handlePrev}
-              className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition"
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition"
             >
               ← 이전 단계
             </button>
             <button
               onClick={() => navigate('/teacher/basic')}
-              className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-lg transition"
+              className="px-8 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition"
             >
               새 세션 시작 →
             </button>
@@ -760,9 +760,9 @@ const TeacherPage3BatchReview: React.FC = () => {
 
           {/* 진행 표시 */}
           <div className="mt-6 flex justify-center items-center space-x-3">
-            <div className="w-3 h-3 rounded-full bg-indigo-300"></div>
-            <div className="w-3 h-3 rounded-full bg-indigo-300"></div>
-            <div className="w-3 h-3 rounded-full bg-indigo-600"></div>
+            <div className="w-3 h-3 rounded-full bg-emerald-300"></div>
+            <div className="w-3 h-3 rounded-full bg-emerald-300"></div>
+            <div className="w-3 h-3 rounded-full bg-emerald-600"></div>
           </div>
         </div>
       </div>

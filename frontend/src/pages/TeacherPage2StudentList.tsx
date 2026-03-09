@@ -82,6 +82,7 @@ const TeacherPage2StudentList: React.FC = () => {
       }));
       setInlineStudents(initialStudents);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 클래스 기반으로 학생 그룹화
@@ -540,21 +541,21 @@ const TeacherPage2StudentList: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <CommonHeader />
 
-      <div className="flex-1 py-8 px-4">
+      <div className="flex-1 py-6 px-4">
         <div className="max-w-7xl mx-auto">
           {/* 상단 헤더 */}
           <div className="mb-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium mb-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium mb-2">
                   <span>👨‍🏫</span>
                   <span>선생님 모드</span>
                 </div>
                 <h1 className="text-2xl font-bold text-gray-900">학생 관리</h1>
-                <p className="text-gray-600 mt-1">
+                <p className="text-gray-500 mt-1">
                   {state.basicInfo.grade}학년 {state.basicInfo.semester}학기 · {getSectionLabel(state.basicInfo.sectionType)}
                 </p>
               </div>
@@ -563,7 +564,7 @@ const TeacherPage2StudentList: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowBulkImportModal(true)}
-                  className="px-4 py-2 bg-white border-2 border-indigo-200 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-50 transition flex items-center gap-2 text-sm"
+                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition flex items-center gap-2 text-sm"
                 >
                   <span>📋</span>
                   엑셀에서 일괄 추가
@@ -571,7 +572,7 @@ const TeacherPage2StudentList: React.FC = () => {
                 {state.students.length > 0 && (
                   <button
                     onClick={() => setShowBulkFileManager(true)}
-                    className="px-4 py-2 bg-amber-500 text-white font-semibold rounded-lg hover:bg-amber-600 transition flex items-center gap-2 text-sm"
+                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition flex items-center gap-2 text-sm"
                   >
                     <span>📁</span>
                     일괄 파일 관리
@@ -583,30 +584,30 @@ const TeacherPage2StudentList: React.FC = () => {
 
           {/* 통계 카드 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
-              <p className="text-2xl font-bold text-indigo-600">{stats.classCount}</p>
-              <p className="text-sm text-gray-600">등록된 반</p>
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
+              <p className="text-sm text-gray-500 mb-1">전체 학생</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.total}명</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
-              <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
-              <p className="text-sm text-gray-600">전체 학생</p>
+            <div className="bg-white rounded-xl border border-green-200 p-4">
+              <p className="text-sm text-gray-500 mb-1">활동 입력 완료</p>
+              <p className="text-2xl font-bold text-green-600">{stats.completed}명</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
-              <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
-              <p className="text-sm text-gray-600">입력 완료</p>
+            <div className="bg-white rounded-xl border border-orange-200 p-4">
+              <p className="text-sm text-gray-500 mb-1">입력 대기</p>
+              <p className="text-2xl font-bold text-orange-600">{stats.pending}명</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
-              <p className="text-2xl font-bold text-orange-500">{stats.pending}</p>
-              <p className="text-sm text-gray-600">입력 대기</p>
+            <div className="bg-white rounded-xl border border-blue-200 p-4">
+              <p className="text-sm text-gray-500 mb-1">반 수</p>
+              <p className="text-2xl font-bold text-blue-600">{stats.classCount}개</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* 좌측: 반 카드 목록 */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-gray-100 bg-gray-50">
-                  <h2 className="font-bold text-gray-800 flex items-center gap-2">
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div className="p-4 border-b border-gray-100">
+                  <h2 className="font-semibold text-gray-800 flex items-center gap-2">
                     <span>🏫</span>
                     반 목록
                   </h2>
@@ -618,13 +619,13 @@ const TeacherPage2StudentList: React.FC = () => {
                     onClick={() => setSelectedClassId(null)}
                     className={`w-full p-3 rounded-lg text-left transition ${
                       selectedClassId === null
-                        ? 'bg-indigo-100 border-2 border-indigo-400 text-indigo-800'
+                        ? 'bg-emerald-50 border-2 border-emerald-400 text-emerald-800'
                         : 'bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium">전체 보기</span>
-                      <span className="text-sm bg-white px-2 py-0.5 rounded-full">
+                      <span className="text-sm bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
                         {state.students.length}명
                       </span>
                     </div>
@@ -638,19 +639,19 @@ const TeacherPage2StudentList: React.FC = () => {
                       animate={{ opacity: 1, y: 0 }}
                       className={`relative group p-3 rounded-lg cursor-pointer transition ${
                         selectedClassId === classInfo.id
-                          ? 'bg-indigo-100 border-2 border-indigo-400'
+                          ? 'bg-emerald-50 border-2 border-emerald-400'
                           : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
                       }`}
                       onClick={() => setSelectedClassId(classInfo.id)}
                     >
                       <div className="flex items-center justify-between">
                         <span className={`font-medium ${
-                          selectedClassId === classInfo.id ? 'text-indigo-800' : 'text-gray-700'
+                          selectedClassId === classInfo.id ? 'text-emerald-800' : 'text-gray-700'
                         }`}>
                           {classInfo.classNumber}
                         </span>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm bg-white px-2 py-0.5 rounded-full">
+                          <span className="text-sm bg-white px-2 py-0.5 rounded-full text-gray-600">
                             {classInfo.students.length}명
                           </span>
                           <button
@@ -667,9 +668,9 @@ const TeacherPage2StudentList: React.FC = () => {
                         </div>
                       </div>
                       {/* 완료율 바 */}
-                      <div className="mt-2 h-1 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-green-500 transition-all"
+                          className="h-full bg-emerald-500 transition-all"
                           style={{
                             width: `${classInfo.students.length > 0
                               ? (classInfo.students.filter(s => hasActivityData(s.id)).length / classInfo.students.length) * 100
@@ -683,7 +684,7 @@ const TeacherPage2StudentList: React.FC = () => {
                   {/* 반 추가 버튼 */}
                   <button
                     onClick={() => setShowAddClassModal(true)}
-                    className="w-full p-3 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition flex items-center justify-center gap-2"
+                    className="w-full p-3 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 hover:border-emerald-400 hover:text-emerald-600 transition flex items-center justify-center gap-2"
                   >
                     <span className="text-lg">+</span>
                     <span>반 추가</span>
@@ -694,16 +695,16 @@ const TeacherPage2StudentList: React.FC = () => {
 
             {/* 우측: 학생 입력/목록 영역 */}
             <div className="lg:col-span-3">
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-                  <h2 className="font-bold text-gray-800 flex items-center gap-2">
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                  <h2 className="font-semibold text-gray-800 flex items-center gap-2">
                     <span>👨‍🎓</span>
                     {selectedClassId
                       ? `${classes.find(c => c.id === selectedClassId)?.classNumber} 학생`
                       : '전체 학생'
                     }
                   </h2>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                     {selectedClassId
                       ? `${classes.find(c => c.id === selectedClassId)?.students.length || 0}명`
                       : `${state.students.length}명`
@@ -732,9 +733,9 @@ const TeacherPage2StudentList: React.FC = () => {
                       key={student.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className={`mb-2 rounded-lg border-2 overflow-hidden ${
+                      className={`mb-2 rounded-lg border overflow-hidden ${
                         hasActivityData(student.id)
-                          ? 'border-green-300 bg-green-50'
+                          ? 'border-emerald-300 bg-emerald-50'
                           : 'border-gray-200 bg-white'
                       }`}
                     >
@@ -744,11 +745,15 @@ const TeacherPage2StudentList: React.FC = () => {
                         onClick={() => setExpandedStudentId(expandedStudentId === student.id ? null : student.id)}
                       >
                         <div className="md:col-span-1 flex items-center gap-2">
-                          <span className="w-6 h-6 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center text-xs font-bold">
+                          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                            hasActivityData(student.id)
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-gray-200 text-gray-600'
+                          }`}>
                             {index + 1}
                           </span>
                           {hasActivityData(student.id) && (
-                            <span className="text-green-600 text-sm">✓</span>
+                            <span className="text-emerald-600 text-sm">✓</span>
                           )}
                         </div>
                         <div className="md:col-span-2 font-medium text-gray-800">
@@ -761,7 +766,7 @@ const TeacherPage2StudentList: React.FC = () => {
                           {student.track || '-'}
                         </div>
                         <div className="md:col-span-3 text-gray-500 text-sm">
-                          <span className="text-indigo-600">
+                          <span className="text-emerald-600">
                             {expandedStudentId === student.id ? '▼ 접기' : '▶ 펼치기'}
                           </span>
                         </div>
@@ -771,11 +776,7 @@ const TeacherPage2StudentList: React.FC = () => {
                               e.stopPropagation();
                               handleOpenActivityModal(student.id);
                             }}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                              hasActivityData(student.id)
-                                ? 'bg-green-600 text-white hover:bg-green-700'
-                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                            }`}
+                            className="px-3 py-1.5 rounded-lg text-sm font-medium transition bg-emerald-600 text-white hover:bg-emerald-700"
                           >
                             {hasActivityData(student.id) ? '수정' : '입력'}
                           </button>
@@ -810,8 +811,11 @@ const TeacherPage2StudentList: React.FC = () => {
                                 className="hidden"
                                 ref={(el) => { fileInputRefs.current[student.id] = el; }}
                                 onChange={(e) => {
-                                  // TODO: 파일 업로드 로직 구현
-                                  console.log('Files:', e.target.files);
+                                  if (e.target.files && e.target.files.length > 0) {
+                                    // 파일이 선택되면 활동 파일 분석 패널 열기
+                                    setCurrentEditingStudent(student.id);
+                                    setShowActivityFilePanel(true);
+                                  }
                                 }}
                               />
                               <button
@@ -860,7 +864,7 @@ const TeacherPage2StudentList: React.FC = () => {
                             value={student.name}
                             onChange={(e) => updateInlineStudent(index, 'name', e.target.value)}
                             placeholder="이름"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                           />
                         </div>
                         <div className="md:col-span-2">
@@ -869,7 +873,7 @@ const TeacherPage2StudentList: React.FC = () => {
                             value={student.desiredMajor}
                             onChange={(e) => updateInlineStudent(index, 'desiredMajor', e.target.value)}
                             placeholder="희망진로"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                           />
                         </div>
                         <div className="md:col-span-2">
@@ -902,7 +906,7 @@ const TeacherPage2StudentList: React.FC = () => {
                               📎 파일
                             </button>
                             {student.files.length > 0 && (
-                              <span className="text-xs text-indigo-600">
+                              <span className="text-xs text-emerald-600">
                                 {student.files.length}개
                               </span>
                             )}
@@ -923,7 +927,7 @@ const TeacherPage2StudentList: React.FC = () => {
                   {/* 학생 추가 버튼 */}
                   <button
                     onClick={() => addMoreStudentRows(5)}
-                    className="mt-4 w-full py-3 border-2 border-dashed border-gray-300 text-gray-500 rounded-lg hover:border-indigo-400 hover:text-indigo-600 transition flex items-center justify-center gap-2"
+                    className="mt-4 w-full py-3 border-2 border-dashed border-gray-300 text-gray-500 rounded-lg hover:border-emerald-400 hover:text-emerald-600 transition flex items-center justify-center gap-2"
                   >
                     <span className="text-lg">+</span>
                     <span>학생 5명 추가</span>
@@ -937,13 +941,13 @@ const TeacherPage2StudentList: React.FC = () => {
           <div className="mt-8 flex justify-between items-center">
             <button
               onClick={handlePrev}
-              className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition"
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition"
             >
               ← 이전 단계
             </button>
             <button
               onClick={handleNext}
-              className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-lg transition"
+              className="px-8 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition"
             >
               다음: 일괄 생성 →
             </button>
@@ -951,8 +955,8 @@ const TeacherPage2StudentList: React.FC = () => {
 
           {/* 진행 표시 */}
           <div className="mt-6 flex justify-center items-center space-x-3">
-            <div className="w-3 h-3 rounded-full bg-indigo-300"></div>
-            <div className="w-3 h-3 rounded-full bg-indigo-600"></div>
+            <div className="w-3 h-3 rounded-full bg-emerald-300"></div>
+            <div className="w-3 h-3 rounded-full bg-emerald-600"></div>
             <div className="w-3 h-3 rounded-full bg-gray-300"></div>
           </div>
         </div>
@@ -992,7 +996,7 @@ const TeacherPage2StudentList: React.FC = () => {
                   value={newClassName}
                   onChange={(e) => setNewClassName(e.target.value)}
                   placeholder="예: 1반, 2반"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleAddClass();
                   }}
@@ -1008,7 +1012,7 @@ const TeacherPage2StudentList: React.FC = () => {
                 </button>
                 <button
                   onClick={handleAddClass}
-                  className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+                  className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium"
                 >
                   추가
                 </button>
@@ -1041,26 +1045,26 @@ const TeacherPage2StudentList: React.FC = () => {
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <button
                   onClick={() => setShowTemplateModal(true)}
-                  className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md text-sm flex items-center gap-2"
+                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition text-sm flex items-center gap-2"
                 >
                   ⚡ 빠른 템플릿
                 </button>
                 <button
                   onClick={() => setShowAnalysisPanel(!showAnalysisPanel)}
-                  className={`px-4 py-2 font-semibold rounded-lg transition-all shadow-md text-sm flex items-center gap-2 ${
+                  className={`px-4 py-2 font-medium rounded-lg transition text-sm flex items-center gap-2 ${
                     showAnalysisPanel
-                      ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white'
-                      : 'bg-gradient-to-r from-pink-600 to-rose-600 text-white hover:from-pink-700 hover:to-rose-700'
+                      ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   🤖 {showAnalysisPanel ? 'AI 분석 패널 닫기' : '기존 자료 AI 분석'}
                 </button>
                 <button
                   onClick={() => setShowActivityFilePanel(!showActivityFilePanel)}
-                  className={`px-4 py-2 font-semibold rounded-lg transition-all shadow-md text-sm flex items-center gap-2 ${
+                  className={`px-4 py-2 font-medium rounded-lg transition text-sm flex items-center gap-2 ${
                     showActivityFilePanel
-                      ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white'
-                      : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600'
+                      ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   📄 {showActivityFilePanel ? '파일 분석 패널 닫기' : '소논문/포폴 업로드'}
@@ -1113,9 +1117,9 @@ const TeacherPage2StudentList: React.FC = () => {
               <div className="flex items-center justify-center gap-2 p-1 bg-gray-100 rounded-lg w-fit mx-auto">
                 <button
                   onClick={() => setIsSimpleMode(true)}
-                  className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                  className={`px-6 py-2 rounded-lg font-medium transition-all ${
                     isSimpleMode
-                      ? 'bg-white text-indigo-600 shadow-md'
+                      ? 'bg-white text-emerald-700 shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
                   }`}
                 >
@@ -1123,9 +1127,9 @@ const TeacherPage2StudentList: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setIsSimpleMode(false)}
-                  className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                  className={`px-6 py-2 rounded-lg font-medium transition-all ${
                     !isSimpleMode
-                      ? 'bg-white text-indigo-600 shadow-md'
+                      ? 'bg-white text-emerald-700 shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
                   }`}
                 >
@@ -1135,8 +1139,8 @@ const TeacherPage2StudentList: React.FC = () => {
 
               {/* 간편 입력 모드 */}
               {isSimpleMode ? (
-                <div className="p-6 bg-white border-2 border-gray-200 rounded-xl">
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <div className="p-6 bg-white border border-gray-200 rounded-xl">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
                     활동 내용 입력 <span className="text-red-500">*</span>
                   </label>
                   <textarea
@@ -1144,20 +1148,20 @@ const TeacherPage2StudentList: React.FC = () => {
                     onChange={(e) => setSimpleContent(e.target.value)}
                     placeholder="학생의 활동 내용을 자유롭게 입력해주세요. AI가 교과세특 형식에 맞게 변환해드립니다."
                     rows={8}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all resize-none"
                   />
                 </div>
               ) : (
                 <>
                   {/* 전문 버젼 - 활동 목록 */}
                   {activityForm.map((activity, index) => (
-                    <div key={activity.id} className="p-6 bg-white border-2 border-gray-200 rounded-xl">
+                    <div key={activity.id} className="p-6 bg-white border border-gray-200 rounded-xl">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <span className="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center text-sm font-bold">
+                          <span className="w-8 h-8 bg-emerald-600 text-white rounded-lg flex items-center justify-center text-sm font-bold">
                             {index + 1}
                           </span>
-                          <h3 className="text-lg font-bold text-gray-900">활동 {index + 1}</h3>
+                          <h3 className="text-lg font-semibold text-gray-900">활동 {index + 1}</h3>
                         </div>
                         {activityForm.length > 1 && (
                           <button
@@ -1179,7 +1183,7 @@ const TeacherPage2StudentList: React.FC = () => {
                             value={activity.period || ''}
                             onChange={(e) => updateActivity(activity.id, 'period', e.target.value)}
                             placeholder="예: 2024.03~06"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                           />
                         </div>
 
@@ -1192,7 +1196,7 @@ const TeacherPage2StudentList: React.FC = () => {
                             onChange={(e) => updateActivity(activity.id, 'content', e.target.value)}
                             placeholder="구체적 활동 내용"
                             rows={4}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 resize-none"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 resize-none"
                           />
                         </div>
 
@@ -1205,7 +1209,7 @@ const TeacherPage2StudentList: React.FC = () => {
                             onChange={(e) => updateActivity(activity.id, 'learnings', e.target.value)}
                             placeholder="배운 점, 성장"
                             rows={2}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 resize-none"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 resize-none"
                           />
                         </div>
 
@@ -1230,7 +1234,7 @@ const TeacherPage2StudentList: React.FC = () => {
                                 addKeywordToActivity(activity.id, activityKeywordInput);
                                 setActivityKeywordInput('');
                               }}
-                              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700"
+                              className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm hover:bg-emerald-700"
                             >
                               추가
                             </button>
@@ -1238,9 +1242,9 @@ const TeacherPage2StudentList: React.FC = () => {
                           {activity.keywords && activity.keywords.length > 0 && (
                             <div className="flex flex-wrap gap-2">
                               {activity.keywords.map((kw, i) => (
-                                <span key={i} className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm flex items-center gap-2">
+                                <span key={i} className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm flex items-center gap-2">
                                   {kw}
-                                  <button onClick={() => removeKeywordFromActivity(activity.id, kw)} className="font-bold hover:text-indigo-900">×</button>
+                                  <button onClick={() => removeKeywordFromActivity(activity.id, kw)} className="font-bold hover:text-emerald-900">×</button>
                                 </span>
                               ))}
                             </div>
@@ -1252,7 +1256,7 @@ const TeacherPage2StudentList: React.FC = () => {
 
                   <button
                     onClick={addActivity}
-                    className="w-full py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-xl hover:bg-gray-50 hover:border-indigo-300 hover:text-indigo-600 font-medium transition-all"
+                    className="w-full py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-xl hover:bg-gray-50 hover:border-emerald-300 hover:text-emerald-600 font-medium transition-all"
                   >
                     + 활동 추가
                   </button>
@@ -1275,14 +1279,14 @@ const TeacherPage2StudentList: React.FC = () => {
                         }
                       }}
                       placeholder="키워드 입력 후 Enter"
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                     />
                     <button
                       onClick={() => {
                         addOverallKeyword(overallKeywordInput);
                         setOverallKeywordInput('');
                       }}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                      className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
                     >
                       추가
                     </button>
@@ -1290,9 +1294,9 @@ const TeacherPage2StudentList: React.FC = () => {
                   {overallKeywords.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {overallKeywords.map((kw, i) => (
-                        <span key={i} className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm flex items-center gap-2">
+                        <span key={i} className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm flex items-center gap-2">
                           {kw}
-                          <button onClick={() => setOverallKeywords(overallKeywords.filter(k => k !== kw))} className="font-bold hover:text-indigo-900">×</button>
+                          <button onClick={() => setOverallKeywords(overallKeywords.filter(k => k !== kw))} className="font-bold hover:text-emerald-900">×</button>
                         </span>
                       ))}
                     </div>
@@ -1314,7 +1318,7 @@ const TeacherPage2StudentList: React.FC = () => {
                 </button>
                 <button
                   onClick={handleSaveActivity}
-                  className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-all"
+                  className="flex-1 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium transition-all"
                 >
                   저장
                 </button>

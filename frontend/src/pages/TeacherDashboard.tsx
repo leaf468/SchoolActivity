@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTeacher } from '../contexts/TeacherContext';
 import { TeacherStudentInfo, TeacherBasicInfo, SectionType, ActivityDetails } from '../types/schoolActivity';
@@ -27,7 +28,9 @@ interface StudentWithFiles extends TeacherStudentInfo {
 }
 
 const TeacherDashboard: React.FC = () => {
-  const { setBasicInfo, setStudentActivity } = useTeacher();
+  const navigate = useNavigate();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { setBasicInfo, setStudentActivity, addStudent, state } = useTeacher();
 
   // 반/과목 카드 관리
   const [classCards, setClassCards] = useState<ClassCard[]>(() => {
@@ -441,8 +444,79 @@ const TeacherDashboard: React.FC = () => {
     }
   };
 
+  // TeacherContext로 학생 및 활동 데이터 전송 후 생성 페이지로 이동
+  const handleProceedToGeneration = () => {
+    if (!selectedCard) {
+      alert('반/과목을 먼저 선택해주세요.');
+      return;
+    }
+
+    const studentsWithActivity = studentsWithFiles.filter(s => s.activityText.trim() || s.analysisResults.length > 0);
+    if (studentsWithActivity.length === 0) {
+      alert('활동 내용이 입력된 학생이 없습니다.\n최소 1명의 학생에게 활동 내용을 입력해주세요.');
+      return;
+    }
+
+    // BasicInfo 설정
+    const basicInfo: TeacherBasicInfo = {
+      grade: selectedCard.grade,
+      semester: selectedCard.semester,
+      sectionType: selectedCard.sectionType,
+      subject: selectedCard.subject,
+    };
+    setBasicInfo(basicInfo);
+
+    // 학생 및 활동 정보 등록
+    studentsWithActivity.forEach(student => {
+      // 학생 등록
+      const studentInfo: TeacherStudentInfo = {
+        id: student.id,
+        name: student.name,
+        classNumber: student.classNumber,
+        desiredMajor: student.desiredMajor,
+        track: student.track,
+      };
+      addStudent(studentInfo);
+
+      // 활동 정보 등록
+      const activityContent = student.activityText ||
+        student.analysisResults[0]?.writingOptions?.[0]?.draft || '';
+
+      if (activityContent) {
+        const activityDetails: ActivityDetails = {
+          activities: [{
+            id: Date.now().toString(),
+            period: '',
+            role: '',
+            content: activityContent,
+            learnings: '',
+            keywords: [],
+          }],
+          overallEmphasis: '',
+          overallKeywords: student.analysisResults[0]?.recommendedPhrases?.map(p => p.phrase).slice(0, 3) || [],
+          maxCharacters: 500 as const,
+        };
+
+        setStudentActivity({
+          studentId: student.id,
+          studentName: student.name,
+          activityDetails,
+          emphasisKeywords: [],
+        });
+      }
+    });
+
+    // 생성 페이지로 이동
+    navigate('/teacher/review');
+  };
+
+  // 활동 입력된 학생 수
+  const studentsWithActivityCount = studentsWithFiles.filter(
+    s => s.activityText.trim() || s.analysisResults.length > 0
+  ).length;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <CommonHeader />
 
       <div className="flex-1 py-6 px-4">
@@ -461,7 +535,7 @@ const TeacherDashboard: React.FC = () => {
                   <h2 className="text-lg font-bold text-gray-800">내 반/과목</h2>
                   <button
                     onClick={() => setShowNewCardModal(true)}
-                    className="w-8 h-8 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center justify-center text-xl font-bold"
+                    className="w-8 h-8 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center justify-center text-xl font-bold"
                   >
                     +
                   </button>
@@ -481,7 +555,7 @@ const TeacherDashboard: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         className={`p-3 rounded-xl cursor-pointer transition-all ${
                           selectedCard?.id === card.id
-                            ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                            ? 'bg-emerald-600 text-white shadow-lg'
                             : 'bg-gray-50 hover:bg-gray-100 text-gray-800'
                         }`}
                         onClick={() => handleSelectCard(card)}
@@ -496,7 +570,7 @@ const TeacherDashboard: React.FC = () => {
                             </div>
                           </div>
                           <div className={`text-xs px-2 py-1 rounded-full ${
-                            selectedCard?.id === card.id ? 'bg-white/20' : 'bg-purple-100 text-purple-600'
+                            selectedCard?.id === card.id ? 'bg-white/20' : 'bg-emerald-100 text-emerald-600'
                           }`}>
                             {card.studentCount}명
                           </div>
@@ -539,13 +613,22 @@ const TeacherDashboard: React.FC = () => {
                           {selectedCard.grade}학년 {selectedCard.classNumber} · {selectedCard.subject || getSectionLabel(selectedCard.sectionType)}
                         </h2>
                       </div>
-                      <div className="flex gap-3 text-sm">
-                        <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
-                          전체 {studentsWithFiles.length}명
-                        </span>
-                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full font-medium">
-                          분석 완료 {studentsWithFiles.filter(s => s.analysisResults.length > 0).length}명
-                        </span>
+                      <div className="flex gap-3 items-center">
+                        <div className="flex gap-2 text-sm">
+                          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full font-medium">
+                            전체 {studentsWithFiles.length}명
+                          </span>
+                          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full font-medium">
+                            활동 입력 {studentsWithActivityCount}명
+                          </span>
+                        </div>
+                        <button
+                          onClick={handleProceedToGeneration}
+                          disabled={studentsWithActivityCount === 0}
+                          className="px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2"
+                        >
+                          🚀 생기부 생성하기
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -575,14 +658,14 @@ const TeacherDashboard: React.FC = () => {
                             value={student.name}
                             onChange={(e) => updateInlineStudent(index, 'name', e.target.value)}
                             placeholder={`${index + 1}. 이름`}
-                            className="flex-1 min-w-0 px-2 py-1 text-sm border border-gray-200 rounded focus:ring-1 focus:ring-purple-500 focus:border-transparent"
+                            className="flex-1 min-w-0 px-2 py-1 text-sm border border-gray-200 rounded focus:ring-1 focus:ring-emerald-500 focus:border-transparent"
                           />
                           <input
                             type="text"
                             value={student.number}
                             onChange={(e) => updateInlineStudent(index, 'number', e.target.value)}
                             placeholder="번호"
-                            className="w-12 px-1 py-1 text-sm border border-gray-200 rounded text-center focus:ring-1 focus:ring-purple-500"
+                            className="w-12 px-1 py-1 text-sm border border-gray-200 rounded text-center focus:ring-1 focus:ring-emerald-500"
                           />
                           <button
                             onClick={() => removeInlineSlot(index)}
@@ -604,7 +687,7 @@ const TeacherDashboard: React.FC = () => {
                       </button>
                       <button
                         onClick={handleAddInlineStudents}
-                        className="px-4 py-1.5 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700"
+                        className="px-4 py-1.5 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700"
                       >
                         학생 등록하기
                       </button>
@@ -625,7 +708,7 @@ const TeacherDashboard: React.FC = () => {
                             className="bg-white rounded-xl shadow-md overflow-hidden"
                           >
                             {/* 학생 헤더 */}
-                            <div className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 border-b flex items-center justify-between">
+                            <div className="p-3 bg-emerald-50 border-b flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <h3 className="font-bold text-gray-900">{student.name}</h3>
                                 {student.classNumber && (
@@ -643,7 +726,7 @@ const TeacherDashboard: React.FC = () => {
                                   </span>
                                 )}
                                 {student.isAnalyzing && (
-                                  <span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-600 rounded animate-pulse">
+                                  <span className="text-xs px-1.5 py-0.5 bg-emerald-100 text-emerald-600 rounded animate-pulse">
                                     ...
                                   </span>
                                 )}
@@ -664,7 +747,7 @@ const TeacherDashboard: React.FC = () => {
                                 onChange={(e) => handleUpdateActivityText(student.id, e.target.value)}
                                 placeholder="활동 내용 직접 입력..."
                                 rows={2}
-                                className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm resize-none focus:ring-1 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm resize-none focus:ring-1 focus:ring-emerald-500 focus:border-transparent"
                               />
 
                               {/* 분석 결과 */}
@@ -686,17 +769,17 @@ const TeacherDashboard: React.FC = () => {
 
                               {/* 파일 업로드 영역 (아래로 이동) */}
                               <div
-                                className="border border-dashed border-gray-200 rounded-lg p-2 text-center hover:border-purple-400 transition cursor-pointer bg-gray-50"
+                                className="border border-dashed border-gray-200 rounded-lg p-2 text-center hover:border-emerald-400 transition cursor-pointer bg-gray-50"
                                 onDragOver={(e) => {
                                   e.preventDefault();
-                                  e.currentTarget.classList.add('border-purple-400', 'bg-purple-50');
+                                  e.currentTarget.classList.add('border-emerald-400', 'bg-emerald-50');
                                 }}
                                 onDragLeave={(e) => {
-                                  e.currentTarget.classList.remove('border-purple-400', 'bg-purple-50');
+                                  e.currentTarget.classList.remove('border-emerald-400', 'bg-emerald-50');
                                 }}
                                 onDrop={(e) => {
                                   e.preventDefault();
-                                  e.currentTarget.classList.remove('border-purple-400', 'bg-purple-50');
+                                  e.currentTarget.classList.remove('border-emerald-400', 'bg-emerald-50');
                                   if (e.dataTransfer.files.length > 0) {
                                     handleStudentFileUpload(student.id, e.dataTransfer.files);
                                   }
@@ -739,7 +822,7 @@ const TeacherDashboard: React.FC = () => {
                               <button
                                 onClick={() => handleAnalyzeStudent(student.id)}
                                 disabled={student.isAnalyzing || (student.files.length === 0 && !student.activityText.trim())}
-                                className="w-full py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition text-xs"
+                                className="w-full py-1.5 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition text-xs"
                               >
                                 {student.isAnalyzing ? '분석 중...' : '🔍 AI 분석'}
                               </button>
@@ -851,7 +934,7 @@ const TeacherDashboard: React.FC = () => {
                 </button>
                 <button
                   onClick={handleAddCard}
-                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700"
+                  className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700"
                 >
                   추가
                 </button>
